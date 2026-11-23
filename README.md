@@ -4,18 +4,16 @@ A black and crimson theme for the existing Jellyfin Web interface. The theme inc
 
 | File | Use |
 | --- | --- |
-| [theme.css](theme.css) | Complete stylesheet. Serve it from your existing Nginx host and add the one-line import from [INSTALL.md](INSTALL.md). |
+| [theme.css](theme.css) | Complete stylesheet. Add the hosted import from [INSTALL.md](INSTALL.md) to Jellyfin's Custom CSS field. |
 | [js/enhancements.js](js/enhancements.js) | Optional enhancement. Adds the Home shortcuts and full Music dashboard through a compatible JavaScript injector. |
 | [assets/hero](assets/hero) | Original Home and Music panoramic art. Each SVG wraps a self-contained WebP. |
 | [assets/icons](assets/icons) | Editable SVG source files for the three library icons. Copies are embedded in the stylesheet. |
-| [scripts/sync-nginx.sh](scripts/sync-nginx.sh) | Stages and validates a GitHub revision before switching Nginx's theme directory. Supports rollback. |
-| [scripts/optional-sync.sh](scripts/optional-sync.sh) | Download-only helper for exporting the CSS and JavaScript. |
 
-See [installation, updating, and rollback](INSTALL.md) and the [changelog](CHANGELOG.md).
+See [the two dashboard links](INSTALL.md) and the [changelog](CHANGELOG.md).
 
 ## Compatibility
 
-The source target is **Jellyfin Web 12.4**, with the Modern desktop and mobile layouts. The CSS styles the native client on its own. The Music dashboard and dynamic Home title use the optional script. Nginx serves the complete stylesheet, script and artwork from one synchronized GitHub revision. The images also have illustrated fallbacks. [Jellyfin Web 12.4 source](https://github.com/jellyfin/jellyfin-web/tree/v12.4)
+The source target is **Jellyfin Web 12.4**, with the Modern desktop and mobile layouts. The CSS styles the native client on its own. The Music dashboard and dynamic Home title use the optional script. This repository's GitHub Pages site serves the stylesheet, script, and artwork. The images also have illustrated fallbacks. [Jellyfin Web 12.4 source](https://github.com/jellyfin/jellyfin-web/tree/v12.4)
 
 Music reads up to 24 recently added albums and 24 artists from the selected library through Jellyfin's signed-in client. The redesigned shelves stay visible when the library is empty. With music present, the native album browser remains underneath. All eight sidebar destinations use Jellyfin's native Modern routes. Recently Played opens Suggestions and shows the signed-in listener's playback history. Home fetches the server name through the public System Info endpoint once per load. [Modern Music views](https://github.com/jellyfin/jellyfin-web/blob/v12.4/src/apps/modern/features/libraries/constants/views/music.ts)
 
@@ -23,6 +21,7 @@ The legacy layout adapter remains available. Current verification targets 12.4 M
 
 ## Development verification
 
-The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled official Web 12.4 frontend and mocked Jellyfin API responses. It covers directly opening Music, empty and populated shelves, native navigation and history, the Home name under a base path, mobile widths and removing the theme. It uses a normal same-origin script tag with the injector's loading behavior. The plugin's server middleware, live Jellyfin playback, and the installed Nginx virtual host still need verification on the target machine.
+The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled official Web 12.4 frontend and mocked Jellyfin API responses. It covers directly opening Music, empty and populated shelves, native navigation and history, the Home name under a base path, mobile widths, and removing the theme. The plugin's server middleware and live playback still need verification on the target machine.
 
 For local development, build the official `v12.4` checkout with `npm ci` and `npm run build:development`. With Playwright installed and its Chromium browser available, run `node tests/verify-web-12.4.cjs . /path/to/jellyfin-web/dist`.
+Set `JFC_THEME_BASE_URL=https://kaevorr.github.io/Jellyfin-Styleing/` to exercise the hosted files in the same browser check.

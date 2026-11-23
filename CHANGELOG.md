@@ -1,11 +1,14 @@
 # Changelog
 
+## Dashboard link installation
+
+- Use the hosted Custom CSS import and JS Injector URL to add, update, or remove the theme from Jellyfin's dashboard.
+
 ## 2.1.0
 
 - Added Jellyfin Web 12.4 Modern support for Music, the app bar, Movies, Shows, and progress indicators.
 - Routed the Music sidebar to the eight native views and added authentic recently played results, album and artist shelves, and empty or retry states.
 - Replaced the Home welcome title with the name returned by Jellyfin's public System Info endpoint.
-- Added same-origin Nginx delivery for the CSS, artwork, and JS Injector script URL, with optional atomic GitHub synchronization and rollback.
 - Added diagnostics and a browser check that runs the official Jellyfin Web 12.4 build.
 
 ## 2.0.0

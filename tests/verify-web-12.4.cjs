@@ -8,6 +8,10 @@
         process.env.JFC_BROWSER || 'chromium'
     ];
     const [repo, dist] = process.argv.slice(2);
+    const fixtureThemeBase = '/_test-theme/';
+    const themeBase = process.env.JFC_THEME_BASE_URL || fixtureThemeBase;
+    const cssUrl = themeBase + 'theme.css';
+    const scriptUrl = themeBase + 'js/enhancements.js?debug';
     assert(
         repo && dist && fs.existsSync(path.join(dist, 'index.html')),
         'Pass the theme repository and the compiled Jellyfin Web 12.4 dist directory.',
@@ -122,14 +126,14 @@
             let html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
             html = html.replace(
                 '</body>',
-                `<script>(function(){var s=document.createElement('script');s.src='/jellyfin-cinematic/js/enhancements.js?debug';document.head.appendChild(s);})();</script></body>`,
+                `<script>(function(){var s=document.createElement('script');s.src=${JSON.stringify(scriptUrl)};document.head.appendChild(s);})();</script></body>`,
             );
             return send(html, 'text/html');
         }
         if (route.startsWith('/jellyfin/web/'))
             return file(dist, route.slice('/jellyfin/web/'.length));
-        if (route.startsWith('/jellyfin-cinematic/'))
-            return file(repo, route.slice('/jellyfin-cinematic/'.length));
+        if (route.startsWith(fixtureThemeBase))
+            return file(repo, route.slice(fixtureThemeBase.length));
         if (!route.startsWith('/jellyfin/'))
             return send('not found', 'text/plain', 404);
         const p = route.slice('/jellyfin'.length),
@@ -148,9 +152,7 @@
             return send('Jellyfin Server', 'text/plain');
         if (low === '/branding/configuration')
             return json({
-                CustomCss: css
-                    ? '@import url("/jellyfin-cinematic/theme.css");'
-                    : '',
+                CustomCss: css ? `@import url("${cssUrl}");` : '',
                 SplashscreenEnabled: false,
             });
         if (low === '/branding/splashscreen')
@@ -438,12 +440,11 @@
             .filter({ hasText: 'Renamed Fixture' })
             .waitFor();
         css = false;
-        await page.evaluate(() => {
+        await page.evaluate((stylesheet) => {
             for (const style of document.querySelectorAll('style')) {
-                if (style.textContent.includes('/jellyfin-cinematic/theme.css'))
-                    style.remove();
+                if (style.textContent.includes(stylesheet)) style.remove();
             }
-        });
+        }, cssUrl);
         await page.evaluate((value) => {
             location.hash = value;
         }, music);
