@@ -1,12 +1,22 @@
 # Install Jellyfin Cinematic
 
-## CSS
+## Install the CSS from GitHub
 
-1. Download [theme.css from GitHub Raw](https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/theme.css). Save a copy of your current CSS for rollback.
-2. Open Jellyfin Web as an administrator and go to **Dashboard → Branding → Custom CSS**. Paste the entire downloaded CSS, save, and reload the client.
-3. For just one profile, use that profile's **Settings → Display → Custom CSS** instead. If a server-wide stylesheet conflicts, enable **Disable server-provided custom CSS code** for that profile.
+The installer works with **Jellyfin Server 10.11.x** and applies the stylesheet server-wide through Jellyfin's Branding API. It downloads the latest CSS from `main`, saves your previous CSS to a local backup, and verifies the update. You need Python 3 and a terminal that can reach Jellyfin and GitHub. [Jellyfin Branding API source](https://github.com/jellyfin/jellyfin/blob/v10.11.11/Jellyfin.Api/Controllers/ConfigurationController.cs)
 
-Direct GitHub Raw CSS imports and JavaScript tags are unsupported for this theme. Raw is the download source. Paste the files into Jellyfin's Custom CSS and the injector respectively. The stylesheet uses Raw only for the two hero image URLs. The small icons and the banner fallbacks are built in. [Jellyfin CSS customization](https://jellyfin.org/docs/general/clients/css-customization/)
+1. In Jellyfin's administrator dashboard, open **API Keys** and create a key named **Jellyfin Cinematic installer**.
+2. Download the installer from GitHub and run it from your Debian terminal. Replace the example URL with your Jellyfin base URL, without `/web`. Keep any reverse-proxy prefix such as `/jellyfin`. Use `http://127.0.0.1:8096` if you are running the command on the Jellyfin machine and it listens on that port.
+
+   ```sh
+   curl --fail --show-error --silent --proto '=https' \
+     --output jellyfin-install-css.py \
+     https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/scripts/install-css.py
+   python3 jellyfin-install-css.py 'https://jellyfin.example.com'
+   ```
+
+3. Enter the API key at the hidden prompt. Save the backup path the installer prints and reload Jellyfin Web. You can revoke the key in the dashboard when you finish.
+
+GitHub Raw supplies the CSS as a download. Browsers block a direct `@import` because the response is `text/plain` with `nosniff`. Jellyfin serves the installed CSS through its own Branding endpoint. The two hero images load directly from GitHub Raw with built-in fallbacks. [Jellyfin CSS customization](https://jellyfin.org/docs/general/clients/css-customization/)
 
 In **Settings → Home**, enable **My Media** or **My Media (small)**, **Continue Watching**, and **Recently Added Media**. Arrange them in that order to match the reference. The customized tiles preserve the configured library names and order. The `--jfc-hero-image` and `--jfc-music-image` variables near the top of the CSS point at the two included Raw assets. Set either to `none` to use the offline fallback.
 
@@ -26,9 +36,9 @@ For the 10.11 server line, the 4.1.0.0 release of the optional **JavaScript Inje
 
 ## Updates
 
-Download both Raw files again after a repository update. Save copies of the currently installed CSS and JavaScript before replacing them in their respective settings. Reload the browser after saving. Pin both downloads to the same commit SHA in place of `main` if you need a reproducible version.
+Run the installer again to apply the latest CSS from GitHub. It skips the write if it finds the same file already installed. For the optional JavaScript, update the existing entry in **JS Injector** with the latest downloaded script.
 
-The optional helper downloads and stages matching CSS and JavaScript into a new private directory. It needs Git and curl, uses public GitHub files, and requires no Jellyfin credentials. Run it explicitly and paste the staged files into the same two settings. Keep a copy of the CSS and script already installed before applying the staged files.
+The optional download helper stages matching CSS and JavaScript from one GitHub revision into a private directory. It needs Git and curl and runs without Jellyfin credentials.
 
 ```sh
 sh scripts/optional-sync.sh "$PWD/cinematic-updates"
@@ -48,5 +58,10 @@ sh scripts/optional-sync.sh "$PWD/cinematic-updates"
 ## Disable or roll back
 
 1. Disable or delete the Cinematic entry in **JS Injector**.
-2. Remove the CSS from **Dashboard → Branding**, or from **Settings → Display** if installed there. Restore your saved CSS and profile preference, or leave the custom CSS field empty for Jellyfin's stock appearance.
-3. Reload open client tabs. To roll back to an earlier Cinematic version, restore both earlier files before re-enabling the script.
+2. Restore the CSS backup by running the command below with the path printed by the installer. For the stock appearance, you can also clear the Custom CSS field under **Dashboard → Branding**.
+
+   ```sh
+   python3 jellyfin-install-css.py 'https://jellyfin.example.com' --restore '/path/to/previous.css'
+   ```
+
+3. Reload open Jellyfin Web tabs. To roll back to an earlier Cinematic version, restore the corresponding optional script before re-enabling it.
