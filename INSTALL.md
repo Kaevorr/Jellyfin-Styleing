@@ -20,7 +20,7 @@ In **JS Injector**, enable **Allow external script URLs**. Open or add the **Jel
 https://kaevorr.github.io/Jellyfin-Styleing/js/enhancements.js
 ```
 
-Leave **JavaScript Code** empty, leave **Load as module** off, and enable the entry. Disable any duplicate Cinematic entry. Save and refresh Jellyfin Web. [JavaScript Injector documentation](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector)
+The URL ends in `.js` without a trailing slash. Leave **JavaScript Code** empty, leave **Load as module** off, and enable the entry. Disable any duplicate Cinematic entry. Save and hard-refresh Jellyfin Web. In **Music → Albums**, the sidebar, red-moon banner, and album and artist shelves should appear even when the library is empty. [JavaScript Injector documentation](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector)
 
 ## Update or remove
 

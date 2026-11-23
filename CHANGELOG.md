@@ -1,5 +1,9 @@
 # Changelog
 
+## Dialogs and menus
+
+- Extended the black-and-crimson palette to Jellyfin dialogs, action menus, dropdowns, filters, form focus states, and confirmation buttons.
+
 ## Music navigation
 
 - Removed the duplicate Home Playlists tile when Music is available. With the Music enhancement enabled, the top-level shortcut moves into Music → Playlists as All playlists.

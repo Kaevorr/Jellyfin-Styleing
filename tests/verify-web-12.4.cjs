@@ -323,6 +323,37 @@
         await page.waitForURL('**&tab=4');
         await page.getByRole('link', { name: 'All playlists' }).click();
         await page.locator('#playlistsPage').waitFor();
+        await page.getByRole('button', { name: 'New Playlist' }).click();
+        const playlistName = page.locator('#txtNewPlaylistName');
+        await playlistName.waitFor();
+        const playlistDialog = page
+            .locator('.dialog.formDialog')
+            .filter({ has: playlistName });
+        assert.match(
+            await playlistDialog.evaluate(
+                (node) => getComputedStyle(node).backgroundImage,
+            ),
+            /linear-gradient/,
+        );
+        const addButton = playlistDialog.getByRole('button', {
+            name: 'Add',
+            exact: true,
+        });
+        assert.match(
+            await addButton.evaluate(
+                (node) => getComputedStyle(node).backgroundImage,
+            ),
+            /linear-gradient/,
+        );
+        await playlistName.focus();
+        assert.equal(
+            await playlistName.evaluate(
+                (node) => getComputedStyle(node).borderTopColor,
+            ),
+            'rgb(255, 104, 119)',
+        );
+        await playlistDialog.locator('.btnCancel').click();
+        await playlistName.waitFor({ state: 'hidden' });
         await page.goBack();
         await page.getByRole('link', { name: 'All playlists' }).waitFor();
         await page.goBack();

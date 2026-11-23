@@ -643,22 +643,6 @@ body {
     padding-inline: 1em;
 }
 
-.dialog.formDialog:has(.genreFilters) {
-    background-color: var(--jfc-panel);
-    color: var(--jfc-white);
-}
-
-.dialog.formDialog:has(.genreFilters) .emby-checkbox:checked + span + .checkboxOutline {
-    border-color: var(--jfc-red);
-    background-color: var(--jfc-crimson);
-    color: var(--jfc-white);
-}
-
-.dialog.formDialog:has(.genreFilters) .emby-checkbox:focus-visible + span + .checkboxOutline {
-    outline: 2px solid var(--jfc-focus);
-    outline-offset: 2px;
-}
-
 :is(.libraryPage, #searchPage) .listItem {
     border-block-end: 1px solid #fff1;
     border-radius: 8px;
@@ -1388,7 +1372,8 @@ html:has(#homeTab.is-active) .MuiAppBar-root a[href="#/"],
     padding-inline: 13px;
 }
 
-#library-view-menu .MuiPaper-root {
+/* Shared legacy and Material UI dialog and menu surfaces. */
+html :is(.dialog, .MuiDialog-paper, .MuiPopover-paper, .MuiAutocomplete-paper) {
     color: var(--jfc-white);
     background: linear-gradient(155deg, #221217, #100c0e);
     border: 1px solid #5d2530;
@@ -1396,22 +1381,105 @@ html:has(#homeTab.is-active) .MuiAppBar-root a[href="#/"],
     box-shadow: 0 12px 28px #0009;
 }
 
-#library-view-menu .MuiMenu-list {
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.formDialogHeader:not(.formDialogHeader-clear), .formDialogFooter, .MuiDialogTitle-root, .MuiDialogActions-root) {
+    color: var(--jfc-white);
+    background: #211116;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.formDialogHeader:not(.formDialogHeader-clear), .MuiDialogTitle-root) {
+    border-block-end: 1px solid #50222b;
+}
+
+:is(.dialog, .MuiDialog-paper) :is(.formDialogFooter, .MuiDialogActions-root) {
+    border-block-start: 1px solid #50222b;
+}
+
+.dialogBackdrop,
+.MuiDialog-root .MuiBackdrop-root {
+    background-color: #050304bb;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.button-submit, .MuiButton-containedPrimary) {
+    color: var(--jfc-white);
+    background: linear-gradient(155deg, #7c101b, #b71024);
+    border-radius: 8px;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.button-submit, .MuiButton-containedPrimary):enabled:hover {
+    background: #a90e21;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.emby-input, .emby-select, .emby-textarea, .MuiOutlinedInput-root, .MuiFilledInput-root) {
+    background-color: #160e11;
+    color: var(--jfc-white);
+    border-radius: 7px;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.emby-input:focus, .emby-select:focus, .emby-textarea:focus, .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+    border-color: var(--jfc-bright);
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.inputLabelFocused, .selectLabelFocused, .textareaLabelFocused, .MuiInputLabel-root.Mui-focused, .MuiButton-textPrimary) {
+    color: var(--jfc-focus);
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) .emby-checkbox:checked + span + .checkboxOutline {
+    border-color: var(--jfc-red);
+    background-color: var(--jfc-crimson);
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) .emby-checkbox:focus-visible + span + .checkboxOutline {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 2px;
+}
+
+:is(.dialog, .MuiDialog-paper, .MuiPopover-paper) :is(.MuiCheckbox-root, .MuiRadio-root).Mui-checked {
+    color: var(--jfc-bright);
+}
+
+:is(.libraryPage, .dialog) select.emby-select,
+:is(.libraryPage, .dialog) select.emby-select option {
+    color-scheme: dark;
+    color: var(--jfc-white);
+    background-color: #211216;
+}
+
+html :is(.MuiTooltip-tooltip, .MuiSnackbarContent-root) {
+    background: #28181d;
+    color: var(--jfc-white);
+    border: 1px solid #5d2530;
+    border-radius: 9px;
+}
+
+.MuiTooltip-arrow {
+    color: #28181d;
+}
+
+.MuiMenu-list {
     padding: 5px;
 }
 
-#library-view-menu .MuiMenuItem-root {
+:is(.MuiMenu-list, .MuiAutocomplete-listbox) :is(.MuiMenuItem-root, .MuiAutocomplete-option),
+.dialog .actionSheetMenuItem {
     min-height: 36px;
     border-radius: 7px;
 }
 
-#library-view-menu .MuiMenuItem-root:is(:hover, .Mui-focusVisible) {
+:is(.MuiMenu-list, .MuiAutocomplete-listbox) :is(.MuiMenuItem-root, .MuiAutocomplete-option):is(:hover, .Mui-focusVisible, .Mui-focused),
+.dialog .actionSheetMenuItem:is(:hover, :focus-visible) {
     background: #50161f;
 }
 
-#library-view-menu .MuiMenuItem-root.Mui-selected {
+:is(.MuiMenu-list, .MuiAutocomplete-listbox) :is(.MuiMenuItem-root.Mui-selected, .MuiAutocomplete-option[aria-selected="true"]) {
     background: linear-gradient(110deg, #790a14, #4b0a12);
     color: #fff;
+}
+
+@media (pointer: coarse) {
+    :is(.MuiMenu-list, .MuiAutocomplete-listbox) :is(.MuiMenuItem-root, .MuiAutocomplete-option),
+    .dialog .actionSheetMenuItem {
+        min-height: 44px;
+    }
 }
 
 /* Leave Jellyfin's playlist library intact and remove its duplicate shortcuts. */
