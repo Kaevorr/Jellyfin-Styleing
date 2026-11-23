@@ -4,7 +4,7 @@ A black and crimson theme for the existing Jellyfin Web interface. The theme inc
 
 | File | Use |
 | --- | --- |
-| [theme.css](theme.css) | Complete stylesheet. Paste into Jellyfin **Dashboard → Branding → Custom CSS**. |
+| [theme.css](theme.css) | Complete stylesheet. Add the one-line GitHub Pages import in [INSTALL.md](INSTALL.md) to Jellyfin **Custom CSS**. |
 | [js/enhancements.js](js/enhancements.js) | Optional enhancement. Adds the Home shortcuts and full Music dashboard through a compatible JavaScript injector. |
 | [assets/hero](assets/hero) | Original Home and Music panoramic art. Each SVG wraps a self-contained WebP. |
 | [assets/icons](assets/icons) | Editable SVG source files for the three library icons. Copies are embedded in the stylesheet. |

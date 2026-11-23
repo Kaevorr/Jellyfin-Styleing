@@ -1,20 +1,16 @@
 # Install Jellyfin Cinematic
 
-## GitHub Raw import
+## Install the CSS
+
+In Jellyfin Web, open **Dashboard → Branding → Custom CSS**. Save a copy of any existing CSS, then enter this line, save, and reload the browser.
 
 ```css
-@import url("https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/theme.css");
+@import url("https://kaevorr.github.io/Jellyfin-Styleing/theme.css");
 ```
 
-This is the one-line import for the GitHub repository. GitHub Raw currently serves the file as `text/plain` with `X-Content-Type-Options: nosniff`. Browsers reject it as a stylesheet, so this line does not apply the theme in Jellyfin. [Browser MIME rules](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options)
+For one profile, use **Settings → Display → Custom CSS**. If the server already supplies a conflicting theme, enable **Disable server-provided custom CSS code** for that profile. Keep any CSS imports before other rules in the field. [Jellyfin CSS customization](https://jellyfin.org/docs/general/clients/css-customization/)
 
-## Apply the CSS from GitHub
-
-1. Download [theme.css from GitHub Raw](https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/theme.css). Save a copy of your current CSS for rollback.
-2. Open Jellyfin Web as an administrator and go to **Dashboard → Branding → Custom CSS**. Paste the entire downloaded CSS, save, and reload the client.
-3. For just one profile, use that profile's **Settings → Display → Custom CSS** instead. If a server-wide stylesheet conflicts, enable **Disable server-provided custom CSS code** for that profile.
-
-The two hero images load from GitHub Raw. The small icons and banner fallbacks are built into the stylesheet. [Jellyfin CSS customization](https://jellyfin.org/docs/general/clients/css-customization/)
+GitHub Pages publishes the stylesheet from `main` and serves it as `text/css`. The photographic banners load from GitHub Raw. The icons and illustrated banner fallbacks are built into the stylesheet.
 
 In **Settings → Home**, enable **My Media** or **My Media (small)**, **Continue Watching**, and **Recently Added Media**. Arrange them in that order to match the reference. The customized tiles preserve the configured library names and order. The `--jfc-hero-image` and `--jfc-music-image` variables near the top of the CSS point at the two included Raw assets. Set either to `none` to use the offline fallback.
 
@@ -34,7 +30,7 @@ For the 10.11 server line, the 4.1.0.0 release of the optional **JavaScript Inje
 
 ## Updates
 
-Download both Raw files again after a repository update. Save copies of the currently installed CSS and JavaScript before replacing them in their respective settings. Reload the browser after saving. Pin both downloads to the same commit SHA in place of `main` if you need a reproducible version.
+The import URL stays the same. Once a change to `theme.css` on `main` has finished deploying to GitHub Pages, reload Jellyfin Web to pick it up. Hard refresh if the browser still has an older copy. To update the optional JavaScript, download it from GitHub Raw and update the existing JS Injector entry.
 
 The optional helper downloads and stages matching CSS and JavaScript into a new private directory. It needs Git and curl, uses public GitHub files, and requires no Jellyfin credentials. Run it explicitly and paste the staged files into the same two settings. Keep a copy of the CSS and script already installed before applying the staged files.
 
