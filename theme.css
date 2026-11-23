@@ -1378,3 +1378,77 @@ html:has(#homeTab.is-active) .MuiAppBar-root a[href="#/"],
     outline: 2px solid var(--jfc-focus);
     outline-offset: 2px;
 }
+
+/* The native library menu also works when enhancements are disabled. */
+.MuiAppBar-root button[aria-controls="library-view-menu"] {
+    color: var(--jfc-white);
+    background: #211216;
+    border: 1px solid #74202d;
+    border-radius: 10px;
+    padding-inline: 13px;
+}
+
+#library-view-menu .MuiPaper-root {
+    color: var(--jfc-white);
+    background: linear-gradient(155deg, #221217, #100c0e);
+    border: 1px solid #5d2530;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px #0009;
+}
+
+#library-view-menu .MuiMenu-list {
+    padding: 5px;
+}
+
+#library-view-menu .MuiMenuItem-root {
+    min-height: 36px;
+    border-radius: 7px;
+}
+
+#library-view-menu .MuiMenuItem-root:is(:hover, .Mui-focusVisible) {
+    background: #50161f;
+}
+
+#library-view-menu .MuiMenuItem-root.Mui-selected {
+    background: linear-gradient(110deg, #790a14, #4b0a12);
+    color: #fff;
+}
+
+/* Leave Jellyfin's playlist library intact and remove its duplicate shortcuts. */
+#homeTab .itemsContainer:has(> :is(.card[data-collectiontype="music"], .homeLibraryButton[href^="#/music?"]))
+> :is(.card[data-collectiontype="playlists"], .homeLibraryButton[href^="#/playlists?"]) {
+    display: none;
+}
+
+html.jfc-enhanced:has(
+    .MuiAppBar-root a[href^="#/music?"],
+    #user-view-overflow-menu a[href^="#/music?"],
+    .MuiDrawer-root a[href^="#/music?"],
+    #homeTab .card[data-collectiontype="music"],
+    #musicPage
+) :is(.MuiAppBar-root, #user-view-overflow-menu, .MuiDrawer-root) a[href^="#/playlists?"] {
+    display: none;
+}
+
+.jfc-all-playlists {
+    display: flex;
+    justify-content: flex-end;
+    padding-block: 12px;
+}
+
+.jfc-all-playlists a {
+    display: inline-flex;
+    align-items: center;
+    gap: .5em;
+    min-height: 40px;
+    padding-inline: 13px;
+    border: 1px solid #74202d;
+    border-radius: 9px;
+    background: #211216;
+    color: var(--jfc-white);
+    text-decoration: none;
+}
+
+.jfc-all-playlists a:hover {
+    background: #50161f;
+}

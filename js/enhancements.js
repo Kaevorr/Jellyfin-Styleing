@@ -466,12 +466,19 @@
         else content.append(nativeHeading);
         const played = modern ? makeShelf(playedDefinition) : null;
         if (played) played.section.hidden = true;
+        const allPlaylists = modern ? make('div', 'jfc-all-playlists') : null;
+        if (allPlaylists) {
+            const link = musicButton('a', 'All playlists', 'queue_music');
+            link.href = '#/playlists?collectionType=playlists&tab=0';
+            allPlaylists.append(link);
+            allPlaylists.hidden = true;
+        }
         const nodes = [sidebar, hero, shortcuts, content];
-        if (played) nodes.push(played.section);
+        if (played) nodes.push(played.section, allPlaylists);
         page.prepend(...nodes);
         nodes.push(nativeHeading);
         page.classList.add('jfc-music-page');
-        return { page, client, userId, parentId, list, content, shelves, nodes, modern, played,
+        return { page, client, userId, parentId, list, content, shelves, nodes, modern, played, allPlaylists,
             tabKey: '', started: false, target: '', playedStarted: false };
     }
 
@@ -499,6 +506,7 @@
         });
         const target = new URLSearchParams(location.hash.split('?')[1]).get('jfc');
         state.content.hidden = activeTab !== 0;
+        state.allPlaylists.hidden = activeTab !== 4;
         state.page.classList.toggle('jfc-music-albums-active', activeTab === 0);
         state.played.section.hidden = activeTab !== 1 || target !== 'played';
         if (!state.played.section.hidden && state.userId && !state.playedStarted) {
@@ -590,6 +598,7 @@
         const root = document.documentElement;
         const desktopOrMobile = root.matches('.layout-desktop, .layout-mobile');
         const cssReady = getComputedStyle(root).getPropertyValue(stylesheet).trim() === '3';
+        root.classList.toggle('jfc-enhanced', cssReady && desktopOrMobile);
         const tab = desktopOrMobile ? document.querySelector(homeSelector) : null;
         const page = tab?.closest('#indexPage');
         const sections = tab?.querySelector(':scope > .sections');

@@ -24,11 +24,13 @@
     let serverName = 'House <Cinema>',
         populated = false,
         css = true,
+        inject = true,
         failArtists = false;
     const items = [
         ['music', 'Music', musicId],
         ['movies', 'Movies', moviesId],
         ['tvshows', 'Shows', tvId],
+        ['playlists', 'Playlists', '7'.repeat(32)],
     ].map(([CollectionType, Name, Id]) => ({
         Id,
         Type: 'CollectionFolder',
@@ -124,10 +126,11 @@
             route === '/jellyfin/web/index.html'
         ) {
             let html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
-            html = html.replace(
-                '</body>',
-                `<script>(function(){var s=document.createElement('script');s.src=${JSON.stringify(scriptUrl)};document.head.appendChild(s);})();</script></body>`,
-            );
+            if (inject)
+                html = html.replace(
+                    '</body>',
+                    `<script>(function(){var s=document.createElement('script');s.src=${JSON.stringify(scriptUrl)};document.head.appendChild(s);})();</script></body>`,
+                );
             return send(html, 'text/html');
         }
         if (route.startsWith('/jellyfin/web/'))
@@ -308,6 +311,22 @@
             8,
         );
         await page.getByText('No artists found', { exact: true }).waitFor();
+        const globalPlaylistEntry = page.locator(
+            '.MuiAppBar-root a[href^="#/playlists?"]',
+        );
+        await globalPlaylistEntry.waitFor({ state: 'attached' });
+        assert.equal(await globalPlaylistEntry.isVisible(), false);
+        await page
+            .locator('.jfc-music-side-links')
+            .getByText('Playlists', { exact: true })
+            .click();
+        await page.waitForURL('**&tab=4');
+        await page.getByRole('link', { name: 'All playlists' }).click();
+        await page.locator('#playlistsPage').waitFor();
+        await page.goBack();
+        await page.getByRole('link', { name: 'All playlists' }).waitFor();
+        await page.goBack();
+        await page.getByText('No albums found', { exact: true }).waitFor();
         assert.equal(
             await page
                 .locator('button[aria-controls="library-view-menu"]')
@@ -358,6 +377,11 @@
             .filter({ hasText: 'House <Cinema>' })
             .waitFor();
         assert.equal(await page.locator('.jfc-hero-title *').count(), 0);
+        const playlistTile = page.locator(
+            '#homeTab .card[data-collectiontype="playlists"]',
+        );
+        await playlistTile.waitFor({ state: 'attached' });
+        assert.equal(await playlistTile.isVisible(), false);
         const progress = page.locator('#homeTab .itemProgressBarForeground');
         await progress.waitFor();
         assert.match(await progress.getAttribute('style'), /42%/);
@@ -458,6 +482,31 @@
                 .locator('button[aria-controls="library-view-menu"]')
                 .isVisible(),
         );
+        css = true;
+        inject = false;
+        await page.reload();
+        await page.waitForFunction(
+            () =>
+                getComputedStyle(document.documentElement)
+                    .getPropertyValue('--jfc-theme-version')
+                    .trim() === '3',
+        );
+        await page.locator('button[aria-controls="library-view-menu"]').click();
+        const menuItem = page.locator(
+            '#library-view-menu .MuiMenuItem-root.Mui-selected',
+        );
+        await menuItem.waitFor();
+        assert.match(
+            await menuItem.evaluate(
+                (node) => getComputedStyle(node).backgroundImage,
+            ),
+            /linear-gradient/,
+        );
+        await page
+            .locator('#library-view-menu')
+            .getByRole('menuitem', { name: 'Songs' })
+            .click();
+        await page.waitForURL('**&tab=5');
         assert.deepEqual(errors, []);
         console.log(
             browserType.name() +

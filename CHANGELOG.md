@@ -1,5 +1,10 @@
 # Changelog
 
+## Music navigation
+
+- Removed the duplicate Home Playlists tile when Music is available. With the Music enhancement enabled, the top-level shortcut moves into Music → Playlists as All playlists.
+- Restyled the native library dropdown for CSS-only browsing.
+
 ## Dashboard link installation
 
 - Use the hosted Custom CSS import and JS Injector URL to add, update, or remove the theme from Jellyfin's dashboard.
