@@ -443,6 +443,21 @@
         }
         await page.locator('#musicPage .jfc-music-hero').waitFor();
         populated = true;
+        // The official client persists the earlier empty library response across reloads.
+        await page.evaluate(() => new Promise((resolve, reject) => {
+            const request = indexedDB.open('keyval-store');
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction('keyval', 'readwrite');
+                tx.objectStore('keyval').delete('jellyfin-query-cache');
+                tx.oncomplete = () => {
+                    db.close();
+                    resolve();
+                };
+                tx.onerror = () => reject(tx.error);
+            };
+        }));
         await page.reload();
         await page
             .locator('#jfc-music-albums .jfc-music-card')
@@ -461,6 +476,21 @@
             'Fixture Artist',
         );
         await page.setViewportSize({ width: 390, height: 844 });
+        const musicLinks = page.getByRole('navigation', { name: 'Music library' });
+        const allSongs = musicLinks.getByRole('link', { name: 'All Songs', exact: true });
+        await allSongs.waitFor();
+        assert.equal(await musicLinks.getByRole('link').first().innerText(), 'All Songs');
+        assert.equal(await musicLinks.getByRole('link', { name: 'Albums', exact: true }).getAttribute('aria-current'), 'page');
+        const mobileAlbums = page.locator('#musicPage .padded-bottom-page .card[data-type="MusicAlbum"]');
+        await mobileAlbums.first().waitFor();
+        assert.equal(
+            await mobileAlbums.first().locator('.cardBox').evaluate(box => getComputedStyle(box).gridTemplateColumns.split(' ')[0]),
+            '56px',
+        );
+        assert.equal(
+            await mobileAlbums.first().locator('.cardText-secondary').first().evaluate(el => getComputedStyle(el).gridColumnStart),
+            '2',
+        );
         assert.equal(
             await page.evaluate(() => document.documentElement.scrollWidth),
             390,
@@ -472,6 +502,15 @@
                     'music-v12-4-mobile.png',
                 ),
             });
+        await allSongs.click();
+        await page.waitForURL(/tab=5/);
+        await page.locator('#musicPage .padded-bottom-page').getByText('Audio 1', { exact: true }).waitFor();
+        assert.equal(await allSongs.getAttribute('aria-current'), 'page');
+        await page.goBack();
+        await mobileAlbums.first().waitFor();
+        await page.setViewportSize({ width: 1366, height: 768 });
+        await musicLinks.getByRole('link', { name: 'Songs', exact: true }).waitFor();
+        assert.equal(await musicLinks.getByRole('link').first().innerText(), 'Albums');
         failArtists = true;
         await page.reload();
         await page

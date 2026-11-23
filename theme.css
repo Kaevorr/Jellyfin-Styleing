@@ -1247,6 +1247,158 @@ html:has(#musicPage.jfc-music-albums-active.jfc-music-empty-library)
     }
 }
 
+@media (max-width: 42em) {
+    #musicPage.jfc-music-page {
+        --jfc-music-margins: 14px;
+        padding-block-start: 0 !important;
+        background: var(--jfc-black);
+    }
+
+    #musicPage.jfc-music-page > .jfc-music-hero {
+        grid-row: 1;
+        gap: 14px;
+        min-height: 94px;
+        margin: 10px 0 0;
+        padding: 12px;
+        border: 1px solid #d33a4938;
+        border-radius: 15px;
+        background: linear-gradient(122deg, #310d16, #160b0f 52%, #111);
+    }
+
+    #musicPage .jfc-music-hero h1 {
+        font-size: clamp(1.85rem, 7vw, 2.6rem);
+    }
+
+    #musicPage .jfc-music-hero p {
+        font-size: .84rem;
+    }
+
+    #musicPage .jfc-music-badge {
+        flex-basis: 45px;
+        transform: none;
+    }
+
+    #musicPage .jfc-music-sidebar {
+        grid-row: 2;
+        padding: 0;
+        margin: 8px 0 0;
+        background: none;
+        border: 0;
+    }
+
+    #musicPage .jfc-music-side-links {
+        gap: 7px;
+        padding: 5px 3px 9px;
+        scrollbar-width: thin;
+        scrollbar-color: #71313b transparent;
+    }
+
+    #musicPage .jfc-music-side-links > a {
+        gap: 6px;
+        padding-inline: 10px;
+        border-color: #ffffff29;
+        border-radius: 10px;
+        background-color: #171215;
+        font-size: .875rem;
+    }
+
+    #musicPage .jfc-music-side-links > a[aria-current] {
+        border-color: var(--jfc-red);
+    }
+
+    #musicPage .jfc-music-shortcuts {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 1px 0 9px;
+    }
+
+    #musicPage .jfc-music-shortcuts > :not(.jfc-music-recent-link),
+    #musicPage.jfc-music-page:not(.jfc-music-empty-library, .jfc-music-recent-albums) .jfc-music-content {
+        display: none;
+    }
+
+    #musicPage .jfc-music-shortcuts > .jfc-music-recent-link {
+        min-height: 44px;
+        padding: 0 10px;
+        gap: 8px;
+        font-size: .84rem;
+    }
+
+    #musicPage .jfc-music-recent-link > .jfc-icon:first-child {
+        font-size: 1.25rem;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .alphaPicker-fixed-right {
+        position: static;
+        width: auto;
+        max-width: 100%;
+        margin-block-end: 6px;
+        overflow-x: auto;
+    }
+
+    #musicPage.jfc-music-page .alphaPicker-fixed-right .MuiToggleButtonGroup-root {
+        flex-direction: row;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardBox {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        align-items: center;
+        column-gap: 12px;
+        margin: 0 0 4px;
+        padding: 6px;
+        border-bottom: 1px solid #ffffff15;
+        border-radius: 8px;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardScalable {
+        grid-row: 1 / span 2;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardPadder {
+        padding-bottom: 100%;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardFooter {
+        min-width: 0;
+        background: none;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardText {
+        grid-column: 2;
+        min-width: 0;
+        padding-inline: 0;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card :is(.cardText, .cardText > a) {
+        text-align: start !important;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardText-first:has(+ .cardText-secondary:not(:empty)) {
+        align-self: end;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardText-secondary {
+        align-self: start;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page > .vertical-wrap > .card .cardText:empty {
+        display: none;
+    }
+
+    #musicPage.jfc-music-page > .padded-bottom-page .listItem {
+        min-height: 56px;
+        border-bottom: 1px solid #ffffff15;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .jfc-music-shortcuts > :is(button, a),
     .jfc-music-track {

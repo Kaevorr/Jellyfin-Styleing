@@ -211,6 +211,8 @@
         ['genresTab', 'local_offer'], ['collectionsTab', 'layers']
     ];
     const modernMusicLabels = ['Albums', 'Suggestions', 'Album Artists', 'Artists', 'Playlists', 'Songs', 'Genres', 'Collections'];
+    const phoneMusicOrder = [5, 4, 0, 3, 2, 1, 6, 7];
+    const phoneMusicLayout = window.matchMedia('(max-width: 42em)');
     const musicSelector = ':is(#musicPage, #musicRecommendedPage).libraryPage:not(.hide)';
     const shelfDefinitions = [
         { title: 'Recently Added Albums', icon: 'album', emptyIcon: 'headphones', noun: 'albums', query: 'getItems' },
@@ -442,6 +444,7 @@
             ['Playlists', 'queue_music', 'playlistsTab', null, 4]
         ]) {
             const button = musicButton(modern ? 'a' : 'button', title, decoration);
+            if (modern && target) button.classList.add('jfc-music-recent-link');
             if (modern) {
                 button.href = musicRoute(index, target);
                 if (target) button.addEventListener('click', () => {
@@ -484,7 +487,7 @@
 
     function clearMusic() {
         if (!music) return;
-        music.page.classList.remove('jfc-music-page', 'jfc-music-empty-library', 'jfc-music-albums-active');
+        music.page.classList.remove('jfc-music-page', 'jfc-music-empty-library', 'jfc-music-albums-active', 'jfc-music-recent-albums');
         music.nodes.forEach(node => node.remove());
         music = null;
         recentlyPlayedRequested = false;
@@ -492,22 +495,28 @@
 
     function updateModernMusic(state) {
         const activeTab = currentMusicTab();
-        if (!state.tabKey) {
-            state.tabKey = 'modern';
-            state.list.replaceChildren(...modernMusicLabels.map((label, index) => {
+        const phone = phoneMusicLayout.matches;
+        const layout = phone ? 'phone' : 'modern';
+        if (state.tabKey !== layout) {
+            state.tabKey = layout;
+            const order = phone ? phoneMusicOrder : modernMusicLabels.keys();
+            state.list.replaceChildren(...Array.from(order, index => {
+                const label = phone && index === 5 ? 'All Songs' : modernMusicLabels[index];
                 const link = musicButton('a', label, musicTabs[index][1]);
                 link.href = musicRoute(index);
+                link.dataset.tab = index;
                 return link;
             }));
         }
-        [...state.list.children].forEach((link, index) => {
-            if (activeTab === index) link.setAttribute('aria-current', 'page');
+        for (const link of state.list.children) {
+            if (activeTab === Number(link.dataset.tab)) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
-        });
+        }
         const target = new URLSearchParams(location.hash.split('?')[1]).get('jfc');
         state.content.hidden = activeTab !== 0;
         state.allPlaylists.hidden = activeTab !== 4;
         state.page.classList.toggle('jfc-music-albums-active', activeTab === 0);
+        state.page.classList.toggle('jfc-music-recent-albums', activeTab === 0 && target === 'albums');
         state.played.section.hidden = activeTab !== 1 || target !== 'played';
         if (!state.played.section.hidden && state.userId && !state.playedStarted) {
             state.playedStarted = true;
@@ -724,6 +733,7 @@
     document.addEventListener('viewhide', schedule, true);
     document.addEventListener('tabchange', schedule, true);
     window.addEventListener('resize', schedule, { passive: true });
+    phoneMusicLayout.addEventListener('change', schedule);
     document.addEventListener('load', event => {
         if (event.target.matches?.('link[rel="stylesheet"], style')) schedule();
     }, true);

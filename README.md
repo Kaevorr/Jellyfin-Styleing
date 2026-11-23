@@ -19,6 +19,8 @@ Music reads up to 24 recently added albums and 24 artists from the selected libr
 
 The legacy layout adapter remains available. Current verification targets 12.4 Modern in a web browser. Browser wrappers and TV layouts can expose different behavior. The optional script tracks route changes and removes its Music UI when leaving the page. Jellyfin Web needs a browser with support for `:has()`.
 
+At widths up to 42em, Modern Music uses compact, swipeable library links and artwork rows. **All Songs** opens Jellyfin's complete Songs view for the selected library, with its own sorting, filters, and playback controls.
+
 ## Development verification
 
 The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled official Web 12.4 frontend and mocked Jellyfin API responses. It covers directly opening Music, empty and populated shelves, native navigation and history, the Home name under a base path, mobile widths, and removing the theme. The plugin's server middleware and live playback still need verification on the target machine.

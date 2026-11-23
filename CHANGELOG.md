@@ -1,5 +1,9 @@
 # Changelog
 
+## Music on phones
+
+- Added a compact crimson Music layout with swipeable library links, a dedicated All Songs entry, and full-width artwork rows.
+
 ## Dialogs and menus
 
 - Extended the black-and-crimson palette to Jellyfin dialogs, action menus, dropdowns, filters, form focus states, and confirmation buttons.
