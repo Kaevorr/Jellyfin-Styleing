@@ -4,8 +4,8 @@
     --jfc-theme-version: 3;
     --jfc-hero-image: url("./assets/hero/home-crimson.svg");
     --jfc-music-image: url("./assets/hero/music-moon.svg");
-    --jfc-hero-position: 70% 24%;
-    --jfc-hero-position-mobile: 71% center;
+    --jfc-hero-position: 76% top;
+    --jfc-hero-position-mobile: 86% top;
     --jfc-title: "Jellyfin";
     --jfc-welcome: "WELCOME TO";
     --jfc-subtitle: "Your personal media server";
@@ -127,16 +127,19 @@ body {
 /* Homepage. The pseudo-element version leaves all native markup in place. */
 :where(.layout-desktop, .layout-mobile) #homeTab {
     --jfc-hero-height: clamp(236px, 15.55vw, 330px);
+    --jfc-tile-height: clamp(110px, 9.3vw, 179px);
+    --jfc-home-art-height: max(calc(var(--jfc-hero-height) + var(--jfc-tile-height) + 4.5rem), 100vw / 3);
     --jfc-hero-indent: clamp(20px, 6.55vw, 130px);
     --jfc-hero-top: clamp(32px, 2.22vw, 53px);
     --jfc-title-size: clamp(3rem, 4.6vw, 5.6rem);
-    --jfc-hero-background:
-        linear-gradient(0deg, var(--jfc-black), #08060700 37%),
-        linear-gradient(90deg, #080607 2%, #080607d9 19%, #08060726 51%, transparent 78%),
-        var(--jfc-hero-image) var(--jfc-hero-position) / cover no-repeat,
-        var(--jfc-mountains) center bottom / 100% 100% no-repeat,
-        radial-gradient(circle at 76% 43%, #ff6c63 0, #ff3233 27%, #b51320 28%, #720c18 39%, transparent 64%) 83% 43% / clamp(210px, 22vw, 420px) 125% no-repeat,
-        linear-gradient(155deg, #0e0d16 20%, #450c19 68%, #1a0c14);
+    min-block-size: var(--jfc-home-art-height);
+    background:
+        linear-gradient(to bottom, transparent 74%, var(--jfc-black)) center top / 100% var(--jfc-home-art-height) no-repeat,
+        linear-gradient(90deg, #080607 2%, #080607d9 19%, #08060726 51%, transparent 78%) center top / 100% var(--jfc-home-art-height) no-repeat,
+        var(--jfc-hero-image) var(--jfc-hero-position) / auto var(--jfc-home-art-height) no-repeat,
+        var(--jfc-mountains) center top / 100% var(--jfc-home-art-height) no-repeat,
+        radial-gradient(ellipse at 78% 43%, #ff514b 0, #cb2230 13%, #450c19 36%, #0e0d16 67%) center top / 100% var(--jfc-home-art-height) no-repeat,
+        var(--jfc-black);
 }
 
 :where(.layout-desktop, .layout-mobile) #homeTab:not(.absolutePageTabContent) {
@@ -149,7 +152,6 @@ body {
     display: block;
     height: var(--jfc-hero-height);
     color: var(--jfc-white);
-    background: var(--jfc-hero-background);
 }
 
 :where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::before {
@@ -262,7 +264,6 @@ body {
 
 /* Library application tiles. Native card and button links stay in place. */
 :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) {
-    --jfc-tile-height: clamp(110px, 9.3vw, 179px);
     --jfc-tile-icon-size: clamp(45px, 7.3vw, 133px);
     --jfc-tile-background:
         radial-gradient(ellipse 94% 120% at 23% 0, #aa858e42, transparent 55%),
@@ -449,10 +450,6 @@ body {
 }
 
 /* Home shelves keep Jellyfin's scrollers, item actions, and progress values. */
-:where(.layout-desktop, .layout-mobile) #homeTab .homeSectionsContainer {
-    background: var(--jfc-black);
-}
-
 :where(.layout-desktop, .layout-mobile) #homeTab :is(.padded-left, [is="emby-scroller"]) {
     padding-inline-start: max(var(--jfc-gutter), env(safe-area-inset-left));
 }
@@ -739,11 +736,11 @@ body {
 @media (max-width: 42em) {
     :where(.layout-desktop, .layout-mobile) #homeTab {
         --jfc-hero-height: 215px;
+        --jfc-tile-height: clamp(96px, 18vw, 126px);
         --jfc-hero-position: var(--jfc-hero-position-mobile);
     }
 
     :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) {
-        --jfc-tile-height: clamp(96px, 18vw, 126px);
         --jfc-tile-icon-size: clamp(38px, 10vw, 62px);
     }
 

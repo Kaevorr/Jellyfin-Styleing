@@ -427,6 +427,25 @@
                 document.querySelectorAll('#homeTab .card[data-jfc-kind]')
                     .length === 3,
         );
+        for (const width of [1920, 390]) {
+            await page.setViewportSize({ width, height: 900 });
+            const art = await page.locator('#homeTab').evaluate(home => {
+                const style = getComputedStyle(home);
+                const tiles = home.querySelector('.card[data-jfc-kind]').parentElement;
+                return {
+                    image: style.backgroundImage,
+                    height: parseFloat(style.backgroundSize.split(',')[2]?.trim().split(' ')[1]),
+                    tilesBottom: tiles.getBoundingClientRect().bottom - home.getBoundingClientRect().top,
+                    viewportWidth: document.documentElement.scrollWidth,
+                };
+            });
+            assert.match(art.image, /home-crimson\.svg/);
+            assert(art.height > art.tilesBottom, 'Home artwork should extend below the library tiles');
+            assert.equal(art.viewportWidth, width);
+            if (process.env.JFC_SCREENSHOTS)
+                await page.screenshot({ path: path.join(process.env.JFC_SCREENSHOTS, `home-art-${width}.png`) });
+        }
+        await page.setViewportSize({ width: 1600, height: 1000 });
         try {
             await page
                 .locator('.jfc-hero-links a')

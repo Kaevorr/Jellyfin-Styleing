@@ -1,5 +1,9 @@
 # Changelog
 
+## Home artwork
+
+- Extended the Home landscape behind the library tiles and kept the full height of the artwork visible.
+
 ## Music on phones
 
 - Added a compact crimson Music layout with swipeable library links, a dedicated All Songs entry, and full-width artwork rows.
