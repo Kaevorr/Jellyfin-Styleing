@@ -1,0 +1,1296 @@
+/* Jellyfin Cinematic 2.0 | Jellyfin Web 10.11.11
+   Install the whole file through Branding. Configuration is in this :root block. */
+:root {
+    --jfc-theme-version: 2;
+    --jfc-hero-image: url("https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/assets/hero/home-crimson.svg");
+    --jfc-music-image: url("https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/assets/hero/music-moon.svg");
+    --jfc-hero-position: 70% 24%;
+    --jfc-hero-position-mobile: 71% center;
+    --jfc-title: "Jellyfin";
+    --jfc-welcome: "WELCOME TO";
+    --jfc-subtitle: "Your personal media server";
+    --jfc-black: #080808;
+    --jfc-panel: #141414;
+    --jfc-white: #fff;
+    --jfc-muted: #c8bec1;
+    --jfc-primary: #e50914;
+    --jfc-red: #ff2438;
+    --jfc-bright: #ff6877;
+    --jfc-crimson: #880b1b;
+    --jfc-focus: #ff9ba5;
+    --jfc-gutter: clamp(14px, 3.65vw, 76px);
+    --jfc-radius: 12px;
+    --jfc-icon-movies: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22red%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ff6862%22%2F%3E%3Cstop%20offset%3D%22.3%22%20stop-color%3D%22%23ff242c%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b50913%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22url%28%23red%29%22%20stroke%3D%22%23ff696c%22%20stroke-width%3D%22.65%22%3E%3Cpath%20d%3D%22M9%2046h82v33a10%2010%200%200%201-10%2010H19A10%2010%200%200%201%209%2079Z%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2219%22%20width%3D%2282%22%20height%3D%2220%22%20rx%3D%225%22%20transform%3D%22rotate%28-13%208%2039%29%22%2F%3E%3C%2Fg%3E%3Cpath%20fill%3D%22%231b0609%22%20d%3D%22m25%2017%2014%2014-8%202-14-14Zm17-4%2014%2014-8%202-14-14Zm17-4%2014%2014-8%202L51%2011Zm17-4%2014%2014-8%202L68%207ZM43%2056q-2-1-2%202v19q0%203%203%201l17-9q3-2%200-4Z%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2231%22%20r%3D%223.2%22%20fill%3D%22%2328070b%22%2F%3E%3C%2Fsvg%3E");
+    --jfc-icon-shows: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22red%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ff7168%22%2F%3E%3Cstop%20offset%3D%22.33%22%20stop-color%3D%22%23ff252c%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b50913%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22m30%2013%2020%2020%2020-20%22%20fill%3D%22none%22%20stroke%3D%22url%28%23red%29%22%20stroke-width%3D%225.5%22%20stroke-linecap%3D%22round%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2232%22%20width%3D%2274%22%20height%3D%2255%22%20rx%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22url%28%23red%29%22%20stroke-width%3D%229%22%2F%3E%3Cpath%20d%3D%22M44%2049q-2-1-2%202v17q0%203%203%201l16-9q2-2%200-3Z%22%20fill%3D%22url%28%23red%29%22%2F%3E%3C%2Fsvg%3E");
+    --jfc-icon-music: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22red%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ff7168%22%2F%3E%3Cstop%20offset%3D%22.36%22%20stop-color%3D%22%23ff252c%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b50913%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M36%2023q0-4%204-5l37-9q5-1%205%204v54c0%209-10%2016-19%2015-10-1-12-10-7-16%204-5%2012-7%2019-5V27l-32%208v42c0%209-9%2016-19%2015-10-1-13-9-8-16%204-6%2013-8%2020-6Z%22%20fill%3D%22url%28%23red%29%22%20stroke%3D%22%23ff696c%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fsvg%3E");
+    --jfc-icon-library: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23ff4353' stroke-width='7' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='m50 16 35 18-35 18-35-18Zm-35 34 35 18 35-18M15 66l35 18 35-18'/%3E%3C/svg%3E");
+    --jfc-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 48'%3E%3Cpath d='M15 5a4 4 0 0 1 6-2l22 17a4 4 0 0 1-1 7L9 45a4 4 0 0 1-6-5Zm5 7-8 23 22-12Z' fill='%23ff253b'/%3E%3C/svg%3E");
+    --jfc-mountains: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 410' preserveAspectRatio='none'%3E%3Cpath fill='%233f1420' d='M0 259 153 179l94 36 154-41 139 54 99-86 79 38 122-100 128 97 72-29 104 56 86-37 170 92v151H0Z'/%3E%3Cpath fill='%231e131d' d='m0 286 116-39 69 21 157-24 112 41 138-87 51 24 130-116 52 45 53-19 132 119 84-28 78 35 111-46 117 56v142H0Z'/%3E%3Cpath fill='%230e0b10' d='m0 318 185-68 160 46 133-20 117 46 122-33 110 18 117-37 120 19 94-34 242 74v81H0Z'/%3E%3C/svg%3E");
+}
+
+/* Chrome and native browse controls. */
+html:not(.layout-tv) {
+    color-scheme: dark;
+    accent-color: var(--jfc-primary);
+}
+
+body {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.backgroundContainer {
+    background: radial-gradient(ellipse at 78% 0, #240910 0, var(--jfc-black) 60%);
+    pointer-events: none;
+}
+
+.skinHeader.skinHeader-withBackground:not(.osdHeader) {
+    color: var(--jfc-white);
+    background: linear-gradient(107deg, #080607 25%, #1a090d 75%, #090607);
+    box-shadow: 0 1px 0 #fff1, 0 6px 22px #0005;
+}
+
+.skinHeader.skinHeader-withBackground.semiTransparent:not(.osdHeader) {
+    background: linear-gradient(107deg, #080607f5, #1a090de8 75%, #090607f5);
+}
+
+.skinHeader .headerButton {
+    border-radius: 50%;
+}
+
+.skinHeader .headerButton:hover,
+.skinHeader .headerButton:focus-visible {
+    color: var(--jfc-bright);
+    background: #ff455b20;
+}
+
+.skinHeader .headerUserButton:not(.headerUserButtonRound) {
+    background-color: #620b17;
+    color: var(--jfc-white);
+}
+
+.skinHeader .pageTitleWithDefaultLogo {
+    inline-size: auto;
+    min-inline-size: 0;
+    background-image: none !important;
+    color: var(--jfc-white);
+    font-size: clamp(1.25rem, 2.12vw, 2.05rem);
+    font-weight: 800;
+    letter-spacing: -.045em;
+    gap: .32em;
+}
+
+.pageTitleWithDefaultLogo::before {
+    content: "";
+    flex: 0 0 1.16em;
+    width: 1.16em;
+    height: 1.19em;
+    background: var(--jfc-logo) center / contain no-repeat;
+}
+
+.pageTitleWithDefaultLogo::after {
+    content: "Jellyfin";
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.skinHeader .emby-tab-button {
+    color: var(--jfc-muted);
+    border-radius: 999px;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+.skinHeader .emby-tab-button:is(:hover, :focus-visible) {
+    background-color: #f93c5028;
+    color: var(--jfc-white);
+}
+
+.skinHeader .emby-tab-button.emby-tab-button-active,
+.mainDrawer .navMenuOption-selected,
+.skinHeader .jfc-nav [aria-current="page"] {
+    color: var(--jfc-white);
+    background: linear-gradient(155deg, #510b13, #a90e1d) !important;
+    box-shadow: inset 0 -1px #ff526c, inset 0 1px #ff9ea24b;
+}
+
+.mainDrawer,
+.nowPlayingBar:not(.nowPlayingBar-hidden) {
+    color: var(--jfc-white);
+    background: #160e12;
+}
+
+.mainDrawer .navMenuOption:hover {
+    background: #35131a;
+    color: var(--jfc-white);
+}
+
+/* Homepage. The pseudo-element version leaves all native markup in place. */
+:where(.layout-desktop, .layout-mobile) #homeTab {
+    --jfc-hero-height: clamp(236px, 15.55vw, 330px);
+    --jfc-hero-indent: clamp(20px, 6.55vw, 130px);
+    --jfc-hero-top: clamp(32px, 2.22vw, 53px);
+    --jfc-title-size: clamp(3rem, 4.6vw, 5.6rem);
+    --jfc-hero-background:
+        linear-gradient(0deg, var(--jfc-black), #08060700 37%),
+        linear-gradient(90deg, #080607 2%, #080607d9 19%, #08060726 51%, transparent 78%),
+        var(--jfc-hero-image) var(--jfc-hero-position) / cover no-repeat,
+        var(--jfc-mountains) center bottom / 100% 100% no-repeat,
+        radial-gradient(circle at 76% 43%, #ff6c63 0, #ff3233 27%, #b51320 28%, #720c18 39%, transparent 64%) 83% 43% / clamp(210px, 22vw, 420px) 125% no-repeat,
+        linear-gradient(155deg, #0e0d16 20%, #450c19 68%, #1a0c14);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(.absolutePageTabContent) {
+    position: relative;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::before,
+:where(.layout-desktop, .layout-mobile) #homeTab > .jfc-hero {
+    box-sizing: border-box;
+    display: block;
+    height: var(--jfc-hero-height);
+    color: var(--jfc-white);
+    background: var(--jfc-hero-background);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::before {
+    content: var(--jfc-title);
+    padding: calc(var(--jfc-hero-top) + 1.7rem) var(--jfc-hero-indent) 0;
+    font-size: var(--jfc-title-size);
+    line-height: 1;
+    font-weight: 850;
+    letter-spacing: -.055em;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::after,
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero)) > .sections::before {
+    position: absolute;
+    inset-inline-start: var(--jfc-hero-indent);
+    color: var(--jfc-muted);
+    pointer-events: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::after,
+#homeTab .jfc-hero-kicker {
+    color: var(--jfc-muted);
+    font-size: clamp(.83rem, 1.27vw, 1.3rem);
+    font-weight: 750;
+    letter-spacing: .13em;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero))::after {
+    content: var(--jfc-welcome);
+    top: var(--jfc-hero-top);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab:not(:has(> .jfc-hero)) > .sections::before {
+    content: var(--jfc-subtitle);
+    top: calc(var(--jfc-hero-top) + 2.12rem + var(--jfc-title-size));
+    font-size: clamp(.95rem, 1.48vw, 1.55rem);
+}
+
+#homeTab > .jfc-hero {
+    padding: var(--jfc-hero-top) var(--jfc-hero-indent) 1rem;
+}
+
+#homeTab .jfc-hero-kicker,
+#homeTab .jfc-hero-title,
+#homeTab .jfc-hero-subtitle {
+    margin: 0;
+}
+
+#homeTab .jfc-hero-title {
+    margin-block: .06em .07em;
+    font-size: var(--jfc-title-size);
+    line-height: 1;
+    font-weight: 850;
+    letter-spacing: -.055em;
+}
+
+#homeTab .jfc-hero-subtitle {
+    color: var(--jfc-muted);
+    font-size: clamp(.95rem, 1.48vw, 1.55rem);
+}
+
+.jfc-nav,
+.jfc-hero-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(3px, .65vw, 14px);
+}
+
+.skinHeader .jfc-nav {
+    display: none;
+}
+
+.jfc-hero-links {
+    flex-wrap: wrap;
+    margin-block-start: clamp(4px, .8vw, 16px);
+}
+
+.jfc-nav > :is(a, button),
+.jfc-hero-links > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .46em;
+    min-height: 44px;
+    padding: 0 .73em;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--jfc-white);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.jfc-hero-links > a:first-child {
+    margin-inline-start: -.73em;
+}
+
+.jfc-nav > :is(a, button):is(:hover, :focus-visible),
+.jfc-hero-links > a:is(:hover, :focus-visible) {
+    background-color: #ff35472b;
+    color: var(--jfc-white);
+}
+
+.jfc-hero-links .material-icons {
+    color: var(--jfc-bright);
+}
+
+/* Library application tiles. Native card and button links stay in place. */
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) {
+    --jfc-tile-height: clamp(110px, 9.3vw, 179px);
+    --jfc-tile-icon-size: clamp(45px, 7.3vw, 133px);
+    --jfc-tile-background:
+        radial-gradient(ellipse 94% 120% at 23% 0, #aa858e42, transparent 55%),
+        radial-gradient(ellipse 144% 200% at 20% -27%, #12090de8 65%, #9a0c1e 69%, #fa394a 70%, #a40b20 71%, #3b080f 83%),
+        linear-gradient(145deg, #26141b, #170708 66%, #6d0718);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(9px, 1.6vw, 27px);
+    align-items: stretch;
+    box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0;
+    margin: 0;
+    white-space: normal !important;
+    transform: none !important;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab :is(.verticalSection, .homeSectionsContainer > div):has(> .itemsContainer > .homeLibraryButton, > [is="emby-scroller"] > .itemsContainer > :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind]), > .itemsContainer > .card[data-type="CollectionFolder"]) > .sectionTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .emby-scrollbuttons:has(+ [is="emby-scroller"] > .itemsContainer > :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) {
+    display: none !important;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab [is="emby-scroller"]:has(> .itemsContainer > :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) {
+    overflow: visible !important;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) > :is(.card, .homeLibraryButton) {
+    --jfc-tile-icon: var(--jfc-icon-library);
+    width: 100% !important;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0;
+    text-transform: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .card:not(.show-animation) {
+    contain: layout style;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab [is="emby-scroller"] {
+    padding-block: 5px 9px;
+}
+
+#homeTab :is(.card[data-collectiontype="movies"], .homeLibraryButton:has(> .homeLibraryIcon.movie), .homeLibraryButton[href*="collectionType=movies"]):not([data-jfc-kind]),
+#homeTab [data-jfc-kind="movies"] {
+    --jfc-tile-icon: var(--jfc-icon-movies) !important;
+}
+
+#homeTab :is(.card[data-collectiontype="tvshows"], .homeLibraryButton:has(> .homeLibraryIcon.tv), .homeLibraryButton[href*="collectionType=tvshows"]):not([data-jfc-kind]),
+#homeTab [data-jfc-kind="tvshows"] {
+    --jfc-tile-icon: var(--jfc-icon-shows) !important;
+}
+
+#homeTab :is(.card[data-collectiontype="music"], .homeLibraryButton:has(> .homeLibraryIcon.music_note), .homeLibraryButton[href*="collectionType=music&"], .homeLibraryButton[href$="collectionType=music"]):not([data-jfc-kind]),
+#homeTab [data-jfc-kind="music"] {
+    --jfc-tile-icon: var(--jfc-icon-music) !important;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card > .cardBox {
+    position: relative;
+    margin: 0 !important;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardScalable,
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer > .homeLibraryButton {
+    box-sizing: border-box;
+    height: var(--jfc-tile-height);
+    border: 1px solid #b356658a;
+    border-radius: clamp(13px, 1.65vw, 30px);
+    background: var(--jfc-tile-background) !important;
+    color: var(--jfc-white) !important;
+    box-shadow: inset 0 1px #ffe1e227, 0 10px 26px #0007;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer > .homeLibraryButton {
+    display: flex;
+    gap: clamp(6px, 1.7vw, 28px);
+    align-items: center;
+    justify-content: flex-start;
+    padding-inline: clamp(14px, 4.6vw, 84px);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .homeLibraryButton > .homeLibraryIcon {
+    width: var(--jfc-tile-icon-size);
+    height: var(--jfc-tile-icon-size);
+    margin: 0;
+    font-size: 0;
+    background: var(--jfc-tile-icon) center / contain no-repeat;
+    filter: drop-shadow(0 4px 10px #ff001f47);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardImageContainer {
+    background: transparent !important; /* Override lazy loader inline backgrounds. */
+    border-radius: inherit;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card :is(.cardImageContainer > img, .blurhash-canvas, .cardDefaultText, .cardPadder .cardImageIcon, .cardImageContainer .cardImageIcon) {
+    visibility: hidden;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardImageContainer::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: clamp(14px, 4.6vw, 84px);
+    top: 50%;
+    width: var(--jfc-tile-icon-size);
+    height: var(--jfc-tile-icon-size);
+    transform: translateY(-50%);
+    background: var(--jfc-tile-icon) center / contain no-repeat;
+    filter: drop-shadow(0 4px 10px #ff001f47);
+    pointer-events: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardPadder {
+    padding: 0;
+    background: none;
+    box-shadow: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardFooter {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText {
+    position: absolute;
+    inset-inline: calc(clamp(14px, 4.6vw, 84px) + var(--jfc-tile-icon-size) + clamp(6px, 1.7vw, 28px)) 12px;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    margin: 0;
+    padding-block: 0;
+    text-align: start;
+    pointer-events: none;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab :is(.homeLibraryText, .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText) {
+    box-sizing: border-box;
+    padding-inline-start: clamp(7px, 1.6vw, 28px);
+    border-inline-start: 1px solid #ffdad453;
+    font-size: clamp(1rem, 2.65vw, 3.05rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -.038em;
+}
+
+#homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText a {
+    display: block;
+    color: inherit;
+    text-align: start !important;
+    pointer-events: auto;
+}
+
+#homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) :is(.homeLibraryText, .cardText a) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+}
+
+#homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardOverlayContainer {
+    background: transparent;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card:is(:hover, :focus-within) .cardScalable,
+:where(.layout-desktop, .layout-mobile) #homeTab .homeLibraryButton:is(:hover, :focus-visible) {
+    border-color: #ff7988;
+    box-shadow: inset 0 0 13px #ff3b51b0, 0 0 0 1px #ff2843, 0 0 24px #ee153d81;
+    transform: translateY(-2px);
+}
+
+/* Home shelves keep Jellyfin's scrollers, item actions, and progress values. */
+:where(.layout-desktop, .layout-mobile) #homeTab .homeSectionsContainer {
+    background: var(--jfc-black);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab :is(.padded-left, [is="emby-scroller"]) {
+    padding-inline-start: max(var(--jfc-gutter), env(safe-area-inset-left));
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab :is(.padded-right, [is="emby-scroller"]) {
+    padding-inline-end: max(var(--jfc-gutter), env(safe-area-inset-right));
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .sectionTitle {
+    color: var(--jfc-white);
+    font-size: clamp(1.18rem, 1.65vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -.022em;
+}
+
+#homeTab .sectionTitleTextButton {
+    color: var(--jfc-white);
+}
+
+#homeTab .sectionTitleTextButton:hover {
+    color: var(--jfc-bright);
+}
+
+#homeTab .sectionTitleTextButton .chevron_right {
+    color: var(--jfc-muted);
+}
+
+#homeTab .sectionTitleContainer:has(> .more) {
+    padding-inline-end: var(--jfc-gutter);
+}
+
+#homeTab .sectionTitleTextButton.more {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] > .card[data-context="home"] {
+    width: clamp(234px, 23.25vw, 472px);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] > .card[data-context="home"] .cardPadder {
+    padding-bottom: 0;
+    aspect-ratio: 16 / 7;
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .verticalSection:has(> .sectionTitleContainer a.more) .scrollSlider > .overflowPortraitCard {
+    width: clamp(125px, 13.25vw, 247px);
+}
+
+:where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:not(:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind]))) > .card > .cardBox {
+    margin-inline: 0 clamp(10px, 1vw, 18px);
+}
+
+#homeTab .cardText,
+.libraryPage .cardText,
+#searchPage .cardText {
+    color: var(--jfc-white);
+    text-align: start;
+    line-height: 1.37;
+    font-weight: 650;
+}
+
+#homeTab .cardText > a,
+.libraryPage .cardText > a,
+#searchPage .cardText > a {
+    text-align: start;
+}
+
+#homeTab .cardText > .textActionButton {
+    text-align: start !important;
+}
+
+#homeTab .itemsContainer:not(:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind]))) .cardTextCentered {
+    text-align: start !important;
+}
+
+:is(.libraryPage, #searchPage) .cardText-secondary {
+    color: var(--jfc-muted);
+    font-weight: 400;
+}
+
+:is(.libraryPage, #searchPage) :is(.cardImageContainer, .cardOverlayContainer, .blurhash-canvas, .cardPadder) {
+    border-radius: var(--jfc-radius);
+}
+
+:is(.libraryPage, #searchPage) .cardImageContainer {
+    box-shadow: inset 0 0 0 1px #fff2, 0 5px 16px #0008;
+}
+
+:is(.libraryPage, #searchPage) .cardScalable {
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    :is(.libraryPage, #searchPage) .card-hoverable:hover .cardScalable {
+        transform: scale(1.025);
+        border-radius: var(--jfc-radius);
+        box-shadow: 0 0 0 1px #ff7a816a, 0 0 18px #da19374f;
+    }
+}
+
+#homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] .cardOverlayContainer {
+    opacity: 1;
+    background: linear-gradient(0deg, #0004, transparent 42%);
+}
+
+#homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] .cardOverlayFab-primary,
+#homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] .cardScalable > .cardOverlayButton[data-action="play"] {
+    opacity: 1;
+    border: 1px solid #fffdfbdb;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    border-radius: 50%;
+    background: #0906079c;
+    color: #fff;
+    transform: translate(-50%, -50%);
+}
+
+#homeTab .itemsContainer[data-monitor="videoplayback,markplayed"] :is(.cardOverlayFab-primary, .cardScalable > .cardOverlayButton[data-action="play"]):is(:hover, :focus-visible) {
+    background: var(--jfc-crimson);
+    transform: translate(-50%, -50%) scale(1.08);
+}
+
+.libraryPage .itemProgressBar {
+    border-radius: 999px;
+    background-color: #f8edf447;
+    overflow: hidden;
+}
+
+#homeTab .itemProgressBar {
+    height: 5px;
+    margin: 3px 10px 6px;
+}
+
+.libraryPage .itemProgressBarForeground:not(.itemProgressBarForeground-recording) {
+    background: linear-gradient(90deg, #ff5363, var(--jfc-primary));
+    border-radius: inherit;
+}
+
+/* Detail, search, music, playlists, and native transport controls. */
+.itemDetailPage .detailRibbon {
+    background: linear-gradient(90deg, #0c080bf5, #1e1015e8 64%, #12090ed9);
+    border-block-end: 1px solid #f1536c25;
+}
+
+.itemDetailPage .itemBackdrop {
+    box-shadow: inset 0 -110px 100px -35px var(--jfc-black);
+}
+
+.itemDetailPage :is(.itemName, .parentName) {
+    letter-spacing: -.025em;
+}
+
+.itemDetailPage :is(.itemGenres, .itemMiscInfo, .tagline) {
+    color: var(--jfc-muted);
+}
+
+.itemDetailPage :is(.btnPlay, .btnReplay) {
+    border-radius: 12px;
+    background: linear-gradient(150deg, #a01125, #730b19);
+    color: var(--jfc-white);
+}
+
+.itemDetailPage :is(.btnPlay, .btnReplay):is(:hover, :focus-visible) {
+    background: #ac1228;
+}
+
+:is(.libraryPage, #searchPage) :is(.button-flat, .paper-icon-button-light):is(:hover, :focus-visible),
+.nowPlayingBar button:is(:hover, :focus-visible) {
+    color: var(--jfc-bright);
+}
+
+:is(.libraryPage, #searchPage) :is(.emby-input, .emby-select) {
+    color: var(--jfc-white);
+    background-color: var(--jfc-panel);
+    border-color: #e2aab54d;
+    border-radius: 10px;
+}
+
+#searchPage .searchFields .emby-input {
+    padding-inline: 1em;
+}
+
+.dialog.formDialog:has(.genreFilters) {
+    background-color: var(--jfc-panel);
+    color: var(--jfc-white);
+}
+
+.dialog.formDialog:has(.genreFilters) .emby-checkbox:checked + span + .checkboxOutline {
+    border-color: var(--jfc-red);
+    background-color: var(--jfc-crimson);
+    color: var(--jfc-white);
+}
+
+.dialog.formDialog:has(.genreFilters) .emby-checkbox:focus-visible + span + .checkboxOutline {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 2px;
+}
+
+:is(.libraryPage, #searchPage) .listItem {
+    border-block-end: 1px solid #fff1;
+    border-radius: 8px;
+}
+
+:is(.libraryPage, #searchPage) .listItem:is(:hover, :focus-within) {
+    background-color: #491a25a6;
+}
+
+:is(.libraryPage, #searchPage) .listItemBodyText.secondary {
+    color: var(--jfc-muted);
+}
+
+.nowPlayingBar .mdl-slider-background-lower,
+.videoOsdBottom .mdl-slider-background-lower {
+    background: var(--jfc-red);
+}
+
+.nowPlayingBar .mdl-slider::-webkit-slider-thumb,
+.videoOsdBottom .mdl-slider::-webkit-slider-thumb {
+    background: var(--jfc-bright);
+}
+
+.nowPlayingBar .mdl-slider::-moz-range-thumb,
+.videoOsdBottom .mdl-slider::-moz-range-thumb {
+    background: var(--jfc-bright);
+}
+
+:is(.skinHeader, .mainDrawer, .libraryPage, #searchPage, .nowPlayingBar) :is(a, button, input, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--jfc-focus) !important;
+    outline-offset: -2px;
+}
+
+@media (min-width: 72em) {
+    .layout-desktop .skinHeader .jfc-nav {
+        display: flex;
+        min-width: 0;
+        margin-inline-start: clamp(10px, 1.6vw, 32px);
+        padding-inline-start: clamp(10px, 1.6vw, 32px);
+        border-inline-start: 1px solid #fff3;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+}
+
+@media (min-width: 100em) {
+    .layout-desktop .skinHeader:has(.jfc-home-nav) .pageTitleWithDefaultLogo {
+        height: 1.35em;
+    }
+
+    .layout-desktop .skinHeader:has(.jfc-home-nav) .headerTabs {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 18rem;
+        margin: 0;
+        transform: translateY(-50%);
+    }
+
+    .layout-desktop .skinHeader:has(.jfc-home-nav) .headerTabs .emby-tab-button-active {
+        display: none;
+    }
+
+    .layout-desktop .skinHeader .jfc-nav {
+        max-inline-size: 50vw;
+    }
+
+    .layout-desktop:has(.skinHeader .jfc-nav) #indexPage.pageWithAbsoluteTabs {
+        padding-top: 4.6em !important;
+    }
+
+    .layout-desktop:has(.skinHeader .jfc-nav) #indexPage .absolutePageTabContent {
+        top: 4.65em !important;
+    }
+}
+
+@media (max-width: 66em) {
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) {
+        --jfc-tile-icon-size: clamp(40px, 7vw, 80px);
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer > .homeLibraryButton {
+        padding-inline: clamp(10px, 2.2vw, 26px);
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardImageContainer::before {
+        inset-inline-start: clamp(10px, 2.2vw, 26px);
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText {
+        inset-inline-start: calc(clamp(10px, 2.2vw, 26px) + var(--jfc-tile-icon-size) + clamp(6px, 1.7vw, 28px));
+    }
+}
+
+@media (max-width: 42em) {
+    :where(.layout-desktop, .layout-mobile) #homeTab {
+        --jfc-hero-height: 215px;
+        --jfc-hero-position: var(--jfc-hero-position-mobile);
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind], .homeLibraryButton)) {
+        --jfc-tile-height: clamp(96px, 18vw, 126px);
+        --jfc-tile-icon-size: clamp(38px, 10vw, 62px);
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer > .homeLibraryButton {
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        padding-inline: 4px;
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardImageContainer::before {
+        inset-inline-start: 0;
+        inset-inline-end: 0;
+        margin-inline: auto;
+        top: 9%;
+        transform: none;
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText {
+        inset-inline: 8px;
+        top: auto;
+        bottom: 14%;
+        transform: none;
+    }
+
+    :where(.layout-desktop, .layout-mobile) #homeTab :is(.homeLibraryText, .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText) {
+        padding-inline: 0;
+        border-inline-start: 0;
+        font-size: clamp(.8rem, 3.1vw, 1.1rem);
+        text-align: center;
+        max-width: 100%;
+    }
+
+    #homeTab .itemsContainer:has(> :is(.card[data-type="CollectionFolder"], .card[data-collectiontype], .card[data-jfc-kind])) > .card .cardText a {
+        text-align: center !important;
+    }
+
+    .jfc-hero-links {
+        font-size: clamp(.72rem, 3.1vw, 1rem);
+    }
+
+    .jfc-hero-links .material-icons {
+        font-size: 1.3em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is(.skinHeader, .libraryPage, #searchPage, .jfc-hero) :is(.emby-tab-button, .cardScalable, .cardOverlayContainer, .cardOverlayButton, .homeLibraryButton, .jfc-hero-links a, .smoothScrollX) {
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+
+    :is(.libraryPage, #searchPage) .card-hoverable:is(:hover, :focus-within) .cardScalable,
+    #homeTab .homeLibraryButton:is(:hover, :focus-visible) {
+        transform: none !important;
+    }
+}
+
+/* Music library. The enhancement delegates navigation to the native tabs. */
+.jfc-music-header .headerTabs {
+    display: none !important;
+}
+
+#musicRecommendedPage.jfc-music-page {
+    --jfc-music-gap: clamp(14px, 2.15vw, 38px);
+    --jfc-music-margins: clamp(15px, 1.75vw, 38px);
+    --jfc-music-side: clamp(150px, 11vw, 218px);
+    position: relative;
+    z-index: 0;
+    display: grid;
+    grid-template-columns: var(--jfc-music-side) minmax(0, 1fr);
+    gap: 0 var(--jfc-music-gap);
+    align-content: start;
+    padding: 4.4rem var(--jfc-music-margins) 6rem !important;
+    background: radial-gradient(ellipse at 69% 44%, #200b10 0, transparent 63%), var(--jfc-black);
+}
+
+#musicRecommendedPage.jfc-music-page.hide {
+    display: none;
+}
+
+#musicRecommendedPage.jfc-music-page > .pageTabContent,
+.jfc-music-hero,
+.jfc-music-shortcuts,
+.jfc-music-content {
+    grid-column: 2;
+    min-width: 0;
+}
+
+.jfc-music-sidebar {
+    grid-row: 1 / span 5;
+    align-self: start;
+    position: sticky;
+    top: 5rem;
+    padding: 10px 0 12px;
+    background: linear-gradient(155deg, #161113, #0d0b0c);
+    border: 1px solid #fff1;
+    border-radius: 14px;
+    z-index: 2;
+}
+
+.jfc-music-sidebar h2 {
+    margin: 5px 13px 12px;
+    padding: 0 8px;
+    color: #fff;
+    font-size: 1.18rem;
+    line-height: 1.3;
+}
+
+.jfc-music-side-links {
+    display: grid;
+    gap: 1px;
+}
+
+.jfc-music-side-links > :is(button, a),
+.jfc-music-shortcuts > button {
+    appearance: none;
+    font: inherit;
+    text-decoration: none;
+    color: var(--jfc-white);
+    background: transparent;
+    cursor: pointer;
+}
+
+.jfc-music-side-links > :is(button, a) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 39px;
+    min-width: 0;
+    padding: 0 12px;
+    margin-inline: 6px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    text-align: start;
+}
+
+.jfc-music-side-links .material-icons {
+    font-size: 1.17rem;
+}
+
+.jfc-music-side-links > :is(button, a):is(:hover, :focus-visible) {
+    background-color: #391117;
+}
+
+.jfc-music-side-links > button[aria-current] {
+    background: linear-gradient(105deg, #790a14, #430810);
+    border-color: #e5091454;
+    font-weight: 700;
+}
+
+.jfc-music-hero {
+    display: flex;
+    align-items: center;
+    gap: clamp(15px, 2.15vw, 40px);
+    min-height: clamp(210px, 13.6vw, 326px);
+    padding-inline: clamp(7px, 1.6vw, 33px);
+    margin-inline-end: calc(-1 * var(--jfc-music-margins));
+    color: #fff;
+    background:
+        linear-gradient(0deg, var(--jfc-black), transparent 33%),
+        linear-gradient(90deg, #080808 0, #0808089c 26%, transparent 64%),
+        var(--jfc-music-image) 74% 28% / cover no-repeat,
+        var(--jfc-mountains) center bottom / 100% 100% no-repeat,
+        radial-gradient(circle at 76% 43%, #ff334a 0, #e50914 12%, #720c18 20%, #180a0e 55%, #080808 82%);
+}
+
+.jfc-music-hero h1 {
+    margin: 0;
+    font-size: clamp(2.65rem, 4.8vw, 6.25rem);
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: -.055em;
+}
+
+.jfc-music-hero p {
+    margin: .34em 0 0;
+    color: #e2dadd;
+    font-size: clamp(.95rem, 1.58vw, 1.85rem);
+    line-height: 1.25;
+}
+
+.jfc-music-badge {
+    flex: 0 0 clamp(62px, 8.5vw, 154px);
+    aspect-ratio: 1;
+    border: 1px solid #e5091499;
+    border-radius: 17%;
+    background: var(--jfc-icon-music) center / 80% auto no-repeat,
+        radial-gradient(ellipse at 40% 0, #620911, #190a0d 68%);
+    box-shadow: 0 0 25px #e5091466, inset 1px 1px 0 #ff53647a;
+    transform: skewX(-5deg);
+}
+
+.jfc-music-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(10px, 2.1vw, 38px);
+    margin-block: -4px clamp(22px, 2.05vw, 40px);
+    z-index: 1;
+}
+
+.jfc-music-shortcuts > button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: clamp(56px, 4.8vw, 92px);
+    gap: clamp(6px, 1.05vw, 21px);
+    padding: 7px clamp(10px, 1.55vw, 28px);
+    text-align: start;
+    font-weight: 750;
+    border: 1px solid #e509148f;
+    border-radius: 11px;
+    background: radial-gradient(ellipse 151% 210% at 15% -32%, #160b0e 65%, #4d0a12 71%, #d90819 72%, #3b0b11 79%);
+    transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.jfc-music-shortcuts > button > .material-icons:first-child {
+    color: var(--jfc-red);
+    font-size: clamp(1.45rem, 2.7vw, 3.1rem);
+}
+
+.jfc-music-shortcuts > button > .material-icons:last-child {
+    font-size: 1.2rem;
+}
+
+.jfc-music-shortcuts > button:is(:hover, :focus-visible) {
+    border-color: var(--jfc-bright);
+    box-shadow: inset 0 0 10px #e509145c, 0 0 18px #e5091455;
+    transform: translateY(-2px);
+}
+
+.jfc-music-shelf {
+    --jfc-music-cover: clamp(125px, 11.6vw, 206px);
+    min-width: 0;
+    margin-block-end: clamp(14px, 1.6vw, 30px);
+    scroll-margin-block-start: 5rem;
+}
+
+.jfc-music-shelf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .45rem;
+}
+
+.jfc-music-shelf-title {
+    display: flex;
+    align-items: center;
+    gap: .55em;
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.16rem, 1.6vw, 1.88rem);
+    font-weight: 800;
+}
+
+.jfc-music-shelf-title .material-icons {
+    color: var(--jfc-red);
+    font-size: 1.2em;
+}
+
+.jfc-music-scroll {
+    display: flex;
+    gap: 5px;
+}
+
+.jfc-music-scroll button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #242022;
+    color: #fff;
+    cursor: pointer;
+}
+
+.jfc-music-scroll button:disabled {
+    opacity: .36;
+    cursor: default;
+}
+
+.jfc-music-scroll button:enabled:hover {
+    background: #6f0b15;
+}
+
+.jfc-music-track {
+    display: flex;
+    gap: clamp(10px, 1vw, 19px);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding: 12px 3px 13px;
+    scrollbar-color: #6f0b15 #1d1719;
+}
+
+.jfc-music-card {
+    flex: 0 0 var(--jfc-music-cover);
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.jfc-music-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    aspect-ratio: 1;
+    border: 1px solid #fff2;
+    border-radius: var(--jfc-radius);
+    color: #b6515b;
+    background: linear-gradient(145deg, #30161c, #141414);
+}
+
+.jfc-music-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.jfc-music-art .material-icons {
+    font-size: 2.3rem;
+}
+
+#jfc-music-artists .jfc-music-art {
+    border-radius: 50%;
+}
+
+.jfc-music-card:is(:hover, :focus-visible) .jfc-music-art {
+    border-color: var(--jfc-bright);
+    box-shadow: 0 0 14px #e5091477;
+}
+
+.jfc-music-card-name,
+.jfc-music-card-artist {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jfc-music-card-name {
+    margin-block-start: 7px;
+    font-weight: 700;
+}
+
+.jfc-music-card-artist {
+    color: var(--jfc-muted);
+    font-size: .87rem;
+}
+
+.jfc-music-empty {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    box-sizing: border-box;
+    min-height: clamp(145px, 9.6vw, 206px);
+    gap: 5px;
+    padding: 10px;
+    text-align: center;
+    color: var(--jfc-muted);
+}
+
+.jfc-music-empty p {
+    margin: 0;
+}
+
+.jfc-music-empty .material-icons {
+    color: #9b9398;
+    font-size: clamp(2.5rem, 3.6vw, 4rem);
+    margin-block-end: .18em;
+}
+
+.jfc-music-empty-title {
+    font-size: clamp(1.08rem, 1.32vw, 1.45rem);
+    font-weight: 740;
+}
+
+.jfc-music-retry {
+    min-height: 40px;
+    padding: 0 1rem;
+    border: 1px solid var(--jfc-primary);
+    border-radius: 999px;
+    background: #610a15;
+    color: #fff;
+    cursor: pointer;
+}
+
+.jfc-music-native-heading {
+    margin: 0;
+    padding-inline: 3.3%;
+    color: var(--jfc-white);
+    font-size: clamp(1.15rem, 1.4vw, 1.6rem);
+}
+
+.jfc-music-native-heading,
+#musicRecommendedPage #recentlyPlayed {
+    scroll-margin-block-start: 5rem;
+}
+
+#musicRecommendedPage .alphaPicker-fixed {
+    z-index: 1;
+}
+
+@media (max-width: 64em) {
+    #musicRecommendedPage.jfc-music-page {
+        grid-template-columns: minmax(0, 1fr);
+        padding-block-start: 4.3rem !important;
+    }
+
+    .jfc-music-sidebar {
+        position: static;
+        grid-row: auto;
+        grid-column: 1;
+        padding: 5px;
+        margin-block-end: 6px;
+    }
+
+    .jfc-music-sidebar h2 {
+        display: none;
+    }
+
+    .jfc-music-side-links {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .jfc-music-side-links > :is(button, a) {
+        flex: 0 0 auto;
+        min-height: 44px;
+        margin: 0;
+    }
+
+    #musicRecommendedPage.jfc-music-page > .pageTabContent,
+    .jfc-music-hero,
+    .jfc-music-shortcuts,
+    .jfc-music-content {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 39em) {
+    .jfc-music-hero {
+        min-height: 176px;
+        margin-inline: 0 calc(-1 * var(--jfc-music-margins));
+        background-position: center, center, 70% 42%, bottom center, center;
+    }
+
+    .jfc-music-shortcuts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jfc-music-shortcuts > button,
+    .jfc-music-track {
+        transition: none;
+        transform: none !important;
+        scroll-behavior: auto;
+    }
+}
+
+/* Shared library browsing, artwork, details and transport. */
+:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) .cardImageContainer {
+    box-shadow: inset 0 0 0 1px #fff2, 0 5px 19px #0008;
+}
+
+:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) .cardTextCentered {
+    color: var(--jfc-white);
+}
+
+#tvRecommendedPage .card[data-type="Episode"] .cardScalable,
+.itemDetailPage :is(.card[data-type="Episode"], .card[data-type="Season"]) .cardScalable {
+    border-radius: var(--jfc-radius);
+    background: linear-gradient(150deg, #201216, #141414);
+}
+
+.itemDetailPage .detailVerticalSection .sectionTitle {
+    color: var(--jfc-white);
+    font-weight: 780;
+    letter-spacing: -.02em;
+}
+
+:is(#moviesPage, #tvRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView):is(:hover, :focus-visible) {
+    background-color: #531019;
+}
+
+:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView, .btnPlayAll, .btnShuffle) {
+    border-radius: 9px;
+    background-color: #20191b;
+}
+
+:is(.detailPagePrimaryContainer, .nowPlayingPage) .listItemImage {
+    border-radius: 9px;
+}
+
+.itemDetailPage :is(.itemName, .parentName) {
+    font-weight: 790;
+}
+
+.nowPlayingBar:not(.nowPlayingBar-hidden) {
+    background: linear-gradient(120deg, #141414, #250d12 90%);
+    box-shadow: inset 0 1px #e509145c, 0 -8px 35px #0009;
+}
+
+.nowPlayingBar :is(.nowPlayingImage, .playPauseButton),
+.nowPlayingPage :is(.nowPlayingPageImageContainer, .nowPlayingPageImageContainer img) {
+    border-radius: 9px;
+}
+
+.nowPlayingBar :is(.playPauseButton, .buttonActive),
+.nowPlayingPage :is(.buttonActive, .btnShuffleQueue:hover) {
+    color: var(--jfc-bright);
+}
+
+.nowPlayingBar .nowPlayingBarSecondaryText {
+    color: var(--jfc-muted);
+}
+
+.nowPlayingPage .mdl-slider-background-lower {
+    background-color: var(--jfc-primary);
+}
+
+.nowPlayingPage .mdl-slider::-webkit-slider-thumb {
+    background: var(--jfc-bright);
+}
+
+.nowPlayingPage .mdl-slider::-moz-range-thumb {
+    background: var(--jfc-bright);
+}
