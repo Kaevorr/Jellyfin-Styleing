@@ -1,9 +1,9 @@
-/* Jellyfin Cinematic 2.0 | Jellyfin Web 10.11.11
+/* Jellyfin Cinematic 2.1 | Jellyfin Web 12.4
    Install the whole file through Branding. Configuration is in this :root block. */
 :root {
-    --jfc-theme-version: 2;
-    --jfc-hero-image: url("https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/assets/hero/home-crimson.svg");
-    --jfc-music-image: url("https://raw.githubusercontent.com/Kaevorr/Jellyfin-Styleing/main/assets/hero/music-moon.svg");
+    --jfc-theme-version: 3;
+    --jfc-hero-image: url("./assets/hero/home-crimson.svg");
+    --jfc-music-image: url("./assets/hero/music-moon.svg");
     --jfc-hero-position: 70% 24%;
     --jfc-hero-position-mobile: 71% center;
     --jfc-title: "Jellyfin";
@@ -823,7 +823,43 @@ body {
     display: none !important;
 }
 
-#musicRecommendedPage.jfc-music-page {
+.jfc-icon {
+    inline-size: 1em;
+    block-size: 1em;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.jfc-music-scroll .jfc-icon {
+    font-size: 1.1rem;
+}
+
+.jfc-music-page [hidden] {
+    display: none !important;
+}
+
+html.jfc-modern-music .MuiAppBar-root button[aria-controls="library-view-menu"] {
+    display: none;
+}
+
+html:has(#musicPage.jfc-music-albums-active.jfc-music-empty-library)
+.MuiAppBar-root .MuiToolbar-root:has(> button[aria-controls="library-view-menu"]),
+#musicPage.jfc-music-albums-active.jfc-music-empty-library > .padded-bottom-page,
+#musicPage.jfc-music-albums-active.jfc-music-empty-library .jfc-music-native-heading {
+    display: none;
+}
+
+:is(#musicPage, #musicRecommendedPage) :is(a, button, [tabindex]):focus-visible {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 2px;
+}
+
+:is(#musicPage, #musicRecommendedPage).jfc-music-page {
     --jfc-music-gap: clamp(14px, 2.15vw, 38px);
     --jfc-music-margins: clamp(15px, 1.75vw, 38px);
     --jfc-music-side: clamp(150px, 11vw, 218px);
@@ -837,11 +873,16 @@ body {
     background: radial-gradient(ellipse at 69% 44%, #200b10 0, transparent 63%), var(--jfc-black);
 }
 
-#musicRecommendedPage.jfc-music-page.hide {
+:is(#musicPage, #musicRecommendedPage).jfc-music-page.hide {
     display: none;
 }
 
-#musicRecommendedPage.jfc-music-page > .pageTabContent,
+#musicPage.jfc-music-page {
+    padding-block-start: 0 !important;
+}
+
+:is(#musicPage, #musicRecommendedPage).jfc-music-page > :not(.jfc-music-sidebar),
+.jfc-music-shelf,
 .jfc-music-hero,
 .jfc-music-shortcuts,
 .jfc-music-content {
@@ -875,7 +916,7 @@ body {
 }
 
 .jfc-music-side-links > :is(button, a),
-.jfc-music-shortcuts > button {
+.jfc-music-shortcuts > :is(button, a) {
     appearance: none;
     font: inherit;
     text-decoration: none;
@@ -897,7 +938,7 @@ body {
     text-align: start;
 }
 
-.jfc-music-side-links .material-icons {
+.jfc-music-side-links .jfc-icon {
     font-size: 1.17rem;
 }
 
@@ -905,7 +946,7 @@ body {
     background-color: #391117;
 }
 
-.jfc-music-side-links > button[aria-current] {
+.jfc-music-side-links > :is(button, a)[aria-current] {
     background: linear-gradient(105deg, #790a14, #430810);
     border-color: #e5091454;
     font-weight: 700;
@@ -935,6 +976,10 @@ body {
     letter-spacing: -.055em;
 }
 
+.jfc-hero-title {
+    overflow-wrap: anywhere;
+}
+
 .jfc-music-hero p {
     margin: .34em 0 0;
     color: #e2dadd;
@@ -961,7 +1006,7 @@ body {
     z-index: 1;
 }
 
-.jfc-music-shortcuts > button {
+.jfc-music-shortcuts > :is(button, a) {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
@@ -976,16 +1021,16 @@ body {
     transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
 }
 
-.jfc-music-shortcuts > button > .material-icons:first-child {
+.jfc-music-shortcuts > :is(button, a) > .jfc-icon:first-child {
     color: var(--jfc-red);
     font-size: clamp(1.45rem, 2.7vw, 3.1rem);
 }
 
-.jfc-music-shortcuts > button > .material-icons:last-child {
+.jfc-music-shortcuts > :is(button, a) > .jfc-icon:last-child {
     font-size: 1.2rem;
 }
 
-.jfc-music-shortcuts > button:is(:hover, :focus-visible) {
+.jfc-music-shortcuts > :is(button, a):is(:hover, :focus-visible) {
     border-color: var(--jfc-bright);
     box-shadow: inset 0 0 10px #e509145c, 0 0 18px #e5091455;
     transform: translateY(-2px);
@@ -1015,7 +1060,7 @@ body {
     font-weight: 800;
 }
 
-.jfc-music-shelf-title .material-icons {
+.jfc-music-shelf-title .jfc-icon {
     color: var(--jfc-red);
     font-size: 1.2em;
 }
@@ -1083,7 +1128,7 @@ body {
     object-fit: cover;
 }
 
-.jfc-music-art .material-icons {
+.jfc-music-art .jfc-icon {
     font-size: 2.3rem;
 }
 
@@ -1130,7 +1175,7 @@ body {
     margin: 0;
 }
 
-.jfc-music-empty .material-icons {
+.jfc-music-empty .jfc-icon {
     color: #9b9398;
     font-size: clamp(2.5rem, 3.6vw, 4rem);
     margin-block-end: .18em;
@@ -1168,7 +1213,7 @@ body {
 }
 
 @media (max-width: 64em) {
-    #musicRecommendedPage.jfc-music-page {
+    :is(#musicPage, #musicRecommendedPage).jfc-music-page {
         grid-template-columns: minmax(0, 1fr);
         padding-block-start: 4.3rem !important;
     }
@@ -1197,7 +1242,8 @@ body {
         margin: 0;
     }
 
-    #musicRecommendedPage.jfc-music-page > .pageTabContent,
+    :is(#musicPage, #musicRecommendedPage).jfc-music-page > :not(.jfc-music-sidebar),
+.jfc-music-shelf,
     .jfc-music-hero,
     .jfc-music-shortcuts,
     .jfc-music-content {
@@ -1218,7 +1264,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .jfc-music-shortcuts > button,
+    .jfc-music-shortcuts > :is(button, a),
     .jfc-music-track {
         transition: none;
         transform: none !important;
@@ -1227,15 +1273,15 @@ body {
 }
 
 /* Shared library browsing, artwork, details and transport. */
-:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) .cardImageContainer {
+:is(#moviesPage, #tvshowsPage, #tvRecommendedPage, #musicPage, #musicRecommendedPage) .cardImageContainer {
     box-shadow: inset 0 0 0 1px #fff2, 0 5px 19px #0008;
 }
 
-:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) .cardTextCentered {
+:is(#moviesPage, #tvshowsPage, #tvRecommendedPage, #musicPage, #musicRecommendedPage) .cardTextCentered {
     color: var(--jfc-white);
 }
 
-#tvRecommendedPage .card[data-type="Episode"] .cardScalable,
+:is(#tvshowsPage, #tvRecommendedPage) .card[data-type="Episode"] .cardScalable,
 .itemDetailPage :is(.card[data-type="Episode"], .card[data-type="Season"]) .cardScalable {
     border-radius: var(--jfc-radius);
     background: linear-gradient(150deg, #201216, #141414);
@@ -1247,11 +1293,11 @@ body {
     letter-spacing: -.02em;
 }
 
-:is(#moviesPage, #tvRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView):is(:hover, :focus-visible) {
+:is(#moviesPage, #tvshowsPage, #tvRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView):is(:hover, :focus-visible) {
     background-color: #531019;
 }
 
-:is(#moviesPage, #tvRecommendedPage, #musicRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView, .btnPlayAll, .btnShuffle) {
+:is(#moviesPage, #tvshowsPage, #tvRecommendedPage, #musicPage, #musicRecommendedPage) :is(.btnFilter, .btnSort, .btnSelectView, .btnPlayAll, .btnShuffle) {
     border-radius: 9px;
     background-color: #20191b;
 }
@@ -1293,4 +1339,42 @@ body {
 
 .nowPlayingPage .mdl-slider::-moz-range-thumb {
     background: var(--jfc-bright);
+}
+
+/* Jellyfin 12 Modern uses a MUI app bar and progress indicators. */
+html:has(:is(#indexPage, #musicPage, #moviesPage, #tvshowsPage, #itemDetailPage, #searchPage):not(.hide)) .MuiAppBar-root {
+    color: var(--jfc-white);
+    background: linear-gradient(107deg, #080808, #1a090d 75%, #090607);
+    box-shadow: 0 1px 0 #fff1, 0 6px 22px #0005;
+}
+
+.MuiAppBar-root .MuiButtonBase-root {
+    text-transform: none;
+    border-radius: 999px;
+}
+
+.MuiAppBar-root :is(.MuiButton-textPrimary, .MuiButton-containedPrimary),
+html:has(#homeTab.is-active) .MuiAppBar-root a[href="#/"],
+.libraryPage .MuiButton-containedPrimary {
+    color: #fff;
+    background: linear-gradient(155deg, #510b13, #a90e1d);
+    box-shadow: inset 0 -1px #ff526c, inset 0 1px #ff9ea24b;
+}
+
+.MuiAppBar-root .MuiButtonBase-root:hover {
+    background-color: #491018;
+}
+
+.libraryPage .itemLinearProgress {
+    background-color: #ffffff48;
+    border-radius: 6px;
+}
+
+.libraryPage .itemLinearProgress .MuiLinearProgress-bar {
+    background-color: var(--jfc-primary);
+}
+
+.MuiAppBar-root .MuiButtonBase-root:focus-visible {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 2px;
 }

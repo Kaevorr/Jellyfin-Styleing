@@ -4,22 +4,25 @@ A black and crimson theme for the existing Jellyfin Web interface. The theme inc
 
 | File | Use |
 | --- | --- |
-| [theme.css](theme.css) | Complete stylesheet. Add the one-line GitHub Pages import in [INSTALL.md](INSTALL.md) to Jellyfin **Custom CSS**. |
+| [theme.css](theme.css) | Complete stylesheet. Serve it from your existing Nginx host and add the one-line import from [INSTALL.md](INSTALL.md). |
 | [js/enhancements.js](js/enhancements.js) | Optional enhancement. Adds the Home shortcuts and full Music dashboard through a compatible JavaScript injector. |
 | [assets/hero](assets/hero) | Original Home and Music panoramic art. Each SVG wraps a self-contained WebP. |
 | [assets/icons](assets/icons) | Editable SVG source files for the three library icons. Copies are embedded in the stylesheet. |
-| [scripts/optional-sync.sh](scripts/optional-sync.sh) | Optional download helper. Stages the latest CSS and JS from one GitHub revision. |
+| [scripts/sync-nginx.sh](scripts/sync-nginx.sh) | Stages and validates a GitHub revision before switching Nginx's theme directory. Supports rollback. |
+| [scripts/optional-sync.sh](scripts/optional-sync.sh) | Download-only helper for exporting the CSS and JavaScript. |
 
 See [installation, updating, and rollback](INSTALL.md) and the [changelog](CHANGELOG.md).
 
 ## Compatibility
 
-The source target is **Jellyfin Web 10.11.11**, standard desktop and mobile browser layouts. The CSS styles the native client on its own. The full Music redesign needs the optional script and a concrete Music library. The default assets load from GitHub Raw with illustrated fallbacks. The stylesheet and script are each maintained as a single complete file. [Jellyfin Web source](https://github.com/jellyfin/jellyfin-web/tree/v10.11.11)
+The source target is **Jellyfin Web 12.4**, with the Modern desktop and mobile layouts. The CSS styles the native client on its own. The Music dashboard and dynamic Home title use the optional script. Nginx serves the complete stylesheet, script and artwork from one synchronized GitHub revision. The images also have illustrated fallbacks. [Jellyfin Web 12.4 source](https://github.com/jellyfin/jellyfin-web/tree/v12.4)
 
-Music reads up to 24 recently created albums and 24 artists from the selected library through the active Jellyfin client's existing methods. Shelves load once when Albums is opened during each visit. The native Albums tab remains available beneath them, including its filters, sorting and play controls. Other sidebar destinations are the native Music tabs. Collections opens the current profile's native Collections view or its native list of accessible collections. Recently Played opens Suggestions and scrolls to Jellyfin's history section when it has content. Media permissions and the native player still belong to Jellyfin. [Music controller](https://github.com/jellyfin/jellyfin-web/blob/v10.11.11/src/controllers/music/musicrecommended.js)
+Music reads up to 24 recently added albums and 24 artists from the selected library through Jellyfin's signed-in client. The redesigned shelves stay visible when the library is empty. With music present, the native album browser remains underneath. All eight sidebar destinations use Jellyfin's native Modern routes. Recently Played opens Suggestions and shows the signed-in listener's playback history. Home fetches the server name through the public System Info endpoint once per load. [Modern Music views](https://github.com/jellyfin/jellyfin-web/blob/v12.4/src/apps/modern/features/libraries/constants/views/music.ts)
 
-Different Jellyfin versions, experimental layouts, native apps, and TV layout may use different markup. The optional script keeps enhancements scoped to recognized pages and the active user, and clears its Music UI on route changes. Jellyfin Web must support modern CSS including `:has()`.
+The legacy layout adapter remains available. Current verification targets 12.4 Modern in a web browser. Browser wrappers and TV layouts can expose different behavior. The optional script tracks route changes and removes its Music UI when leaving the page. Jellyfin Web needs a browser with support for `:has()`.
 
 ## Development verification
 
-Local tests use fixtures built from the 10.11.11 Home and Music markup and upstream styles, with mocked library data and native-tab callbacks. A functioning Jellyfin server is still needed to verify the injector, server responses, real playback, and per-profile configuration. No live server is required for editing the theme.
+The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled official Web 12.4 frontend and mocked Jellyfin API responses. It covers directly opening Music, empty and populated shelves, native navigation and history, the Home name under a base path, mobile widths and removing the theme. It uses a normal same-origin script tag with the injector's loading behavior. The plugin's server middleware, live Jellyfin playback, and the installed Nginx virtual host still need verification on the target machine.
+
+For local development, build the official `v12.4` checkout with `npm ci` and `npm run build:development`. With Playwright installed and its Chromium browser available, run `node tests/verify-web-12.4.cjs . /path/to/jellyfin-web/dist`.
