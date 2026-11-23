@@ -3,6 +3,7 @@
 ## Home artwork
 
 - Extended the Home landscape behind the library tiles and kept the full height of the artwork visible.
+- Removed the duplicate library shortcuts under the Home welcome text.
 
 ## Music on phones
 

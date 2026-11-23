@@ -408,6 +408,7 @@
             .filter({ hasText: 'House <Cinema>' })
             .waitFor();
         assert.equal(await page.locator('.jfc-hero-title *').count(), 0);
+        assert.equal(await page.locator('#homeTab .jfc-hero a').count(), 0);
         const playlistTile = page.locator(
             '#homeTab .card[data-collectiontype="playlists"]',
         );
@@ -448,8 +449,7 @@
         await page.setViewportSize({ width: 1600, height: 1000 });
         try {
             await page
-                .locator('.jfc-hero-links a')
-                .filter({ hasText: 'Music' })
+                .locator('#homeTab .card[data-jfc-kind="music"] .cardText a')
                 .click({ timeout: 4500 });
         } catch (e) {
             console.log(

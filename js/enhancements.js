@@ -3,7 +3,7 @@
 
     // Optional: map a library ID from its native link to movies, tvshows, or music.
     const libraryTypesById = {};
-    const labels = { home: 'Home', media: 'My Media', your: 'Your' };
+    const labels = { home: 'Home', media: 'My Media' };
     const libraryTypes = new Map([
         ['movies', { icon: 'movie', path: '/movies' }],
         ['tvshows', { icon: 'tv', path: '/tv' }],
@@ -129,33 +129,21 @@
         });
     }
 
-    function setHero(tab, sections, shortcuts) {
-        let hero = tab.querySelector(':scope > .jfc-hero');
-        if (!hero) {
-            hero = make('section', 'jfc-hero');
-            const style = getComputedStyle(tab);
-            const title = make('h1', 'jfc-hero-title', themeText(style, 'title'));
-            hero.append(
-                make('p', 'jfc-hero-kicker', themeText(style, 'welcome')),
-                title,
-                make('p', 'jfc-hero-subtitle', themeText(style, 'subtitle')),
-                make('div', 'jfc-hero-links')
-            );
-            sections.before(hero);
-            serverName().then(name => {
-                if (name && title.isConnected) title.textContent = name;
-            });
-        }
+    function setHero(tab, sections) {
+        if (tab.querySelector(':scope > .jfc-hero')) return;
 
-        const list = hero.querySelector('.jfc-hero-links');
-        const key = JSON.stringify(shortcuts.map(({ name, href }) => [name, href]));
-        if (list.dataset.jfcKey === key) return;
-        list.dataset.jfcKey = key;
-        list.replaceChildren(...shortcuts.map(library => {
-            const link = makeAction('a', [labels.your, library.name].filter(Boolean).join(' '), library.type.icon);
-            link.href = library.href;
-            return link;
-        }));
+        const hero = make('section', 'jfc-hero');
+        const style = getComputedStyle(tab);
+        const title = make('h1', 'jfc-hero-title', themeText(style, 'title'));
+        hero.append(
+            make('p', 'jfc-hero-kicker', themeText(style, 'welcome')),
+            title,
+            make('p', 'jfc-hero-subtitle', themeText(style, 'subtitle'))
+        );
+        sections.before(hero);
+        serverName().then(name => {
+            if (name && title.isConnected) title.textContent = name;
+        });
     }
 
     function focusLibrary() {
@@ -640,7 +628,7 @@
         if (homeActive) {
             const libraries = getLibraries(sections);
             const shortcuts = getPrimaryShortcuts(libraries);
-            setHero(tab, sections, shortcuts);
+            setHero(tab, sections);
             setHeader(header, shortcuts, libraries.length > 0, 'home');
         } else {
             tab?.querySelector(':scope > .jfc-hero')?.remove();
