@@ -23,6 +23,8 @@ At widths up to 42em, Modern Music uses compact, swipeable library links and art
 
 **Movies & Shows** appears in the Modern navigation and on Home when the signed-in user has a movie or show library. The All, Movies, and Shows filters use real artwork, recent additions, and watch progress from Jellyfin. Select a title to open its native detail page. **Browse libraries** opens the complete Jellyfin library with its usual search, filters, and sorting.
 
+The [Kaevorr JellyNext fork](https://github.com/Kaevorr/jellynext) can mount its Discovery shelves directly inside Movies & Shows. **All** shows both shelves. **Movies** and **Shows** show the corresponding shelf. The **Discovery** shortcut appears when a shelf is available. JellyNext supplies its own catalogs, recommendations, requests, and playback actions. Its appearance overrides can still be configured in JellyNext. [JellyNext setup and styling](https://github.com/Kaevorr/jellynext/blob/main/STYLING.md)
+
 ## Music Playlists
 
 Open **Music → Music Playlists** to create, search, rename, delete, play, or shuffle a playlist. The Music dashboard also shows a shelf. Use **+ Music Playlist** from Songs, album tracks, or Recently Played to add a track to one or more playlists. The detail view supports drag reordering on desktop and move buttons on keyboard and touch. It keeps entries for missing or inaccessible tracks until you choose to remove them.
@@ -37,3 +39,4 @@ The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled o
 
 For local development, build the official `v12.4` checkout with `npm ci` and `npm run build:development`. With Playwright installed and its Chromium browser available, run `node tests/verify-web-12.4.cjs . /path/to/jellyfin-web/dist`.
 Set `JFC_THEME_BASE_URL` to a compatible hosted theme directory to exercise that copy. The default fixture serves the repository files locally.
+Set `JFC_JELLYNEXT_SCRIPT` to the fork's `Jellyfin.Plugin.JellyNext/Resources/discovery.js` to include its actual discovery client in the fixture. The fixture supplies mock catalog, permissions, recommendation, and request responses.

@@ -1473,10 +1473,11 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     gap: 8px;
     padding: 14px var(--jfc-watch-gutter);
     border-bottom: 1px solid #fff2;
-    background: linear-gradient(100deg, #141114, #2b0b13 80%, #141114);
+    background: #101013;
 }
 
 .jfc-watch-filters > a,
+.jfc-watch-discover,
 .jfc-watch-libraries summary {
     box-sizing: border-box;
     min-height: 44px;
@@ -1485,6 +1486,27 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     border-radius: 8px;
     background: var(--jfc-panel);
     font-weight: 700;
+}
+
+.jfc-watch-filters > a[aria-current] {
+    border-color: var(--jfc-bright);
+}
+
+.jfc-watch-discover {
+    display: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.jfc-watch:has([data-jellynext-discovery] > .jellynext-discovery:not([hidden])) .jfc-watch-discover {
+    display: inline-flex;
+    align-items: center;
+}
+
+.jfc-watch-discover:hover {
+    border-color: var(--jfc-bright);
 }
 
 .jfc-watch-libraries {
@@ -1516,8 +1538,8 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     display: flex;
     align-items: end;
     box-sizing: border-box;
-    min-height: clamp(310px, 41vw, 650px);
-    padding: clamp(24px, 6vw, 105px) var(--jfc-watch-gutter) clamp(32px, 5vw, 85px);
+    min-height: clamp(330px, 62svh, 690px);
+    padding: clamp(24px, 6vw, 105px) var(--jfc-watch-gutter) clamp(35px, 6vw, 90px);
     background:
         var(--jfc-mountains) center bottom / 100% 85% no-repeat,
         radial-gradient(ellipse at 82% 35%, #831b33, #201018 44%, var(--jfc-black) 78%);
@@ -1540,8 +1562,8 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 .jfc-watch-feature::after {
     content: "";
     z-index: -1;
-    background: linear-gradient(to top, var(--jfc-black), #080808b0 20%, transparent 70%),
-        linear-gradient(90deg, #080808fa, #080808af 31%, transparent 80%);
+    background: linear-gradient(to top, var(--jfc-black), #080808bf 18%, transparent 65%),
+        linear-gradient(90deg, #080808fa, #080808bb 26%, transparent 77%);
 }
 
 .jfc-watch-feature-copy {
@@ -1599,6 +1621,7 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 
 .jfc-watch-row .jfc-music-track {
     scroll-snap-type: x proximity;
+    scrollbar-width: thin;
 }
 
 .jfc-watch-card {
@@ -1646,6 +1669,16 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     object-fit: cover;
 }
 
+.jfc-watch-art img,
+.jellynext-discovery .jellynext-poster img {
+    transition: transform .22s ease;
+}
+
+.jfc-watch-card:is(:hover, :focus-visible) img,
+.jellynext-discovery .jellynext-card:is(:hover, :focus-visible) img {
+    transform: scale(1.04);
+}
+
 .jfc-watch-card:is(:hover, :focus-visible) .jfc-watch-art {
     border-color: var(--jfc-bright);
     box-shadow: 0 0 12px #e5091459;
@@ -1665,6 +1698,57 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     outline-offset: 2px;
 }
 
+/* JellyNext owns its cards and actions; these variables skin its public surfaces. */
+:where(:root) {
+    --jellynext-text: var(--jfc-white);
+    --jellynext-muted: var(--jfc-muted);
+    --jellynext-card-width: clamp(116px, 13vw, 218px);
+    --jellynext-card-gap: clamp(10px, 1vw, 19px);
+    --jellynext-card-radius: 10px;
+    --jellynext-poster-background: linear-gradient(147deg, #35141d, var(--jfc-panel));
+    --jellynext-dialog-background: #151216;
+    --jellynext-dialog-width: 54rem;
+    --jellynext-border: #60424b;
+    --jellynext-backdrop: #080609d9;
+    --jellynext-button-background: #25191e;
+    --jellynext-accent: var(--jfc-crimson);
+    --jellynext-accent-text: var(--jfc-white);
+    --jellynext-focus: var(--jfc-focus);
+}
+
+.jfc-watch [data-jellynext-discovery] > .jellynext-discovery:not([hidden]) {
+    margin-block: 0 24px;
+    padding-block: 8px 4px;
+    padding-inline: var(--jfc-watch-gutter);
+}
+
+.jfc-watch .jellynext-heading {
+    margin: 0 0 14px;
+    scroll-margin-top: 70px;
+}
+
+.jfc-watch .jellynext-cards {
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+}
+
+.jfc-watch .jellynext-card {
+    scroll-snap-align: start;
+}
+
+.jfc-watch :is(.jellynext-catalog-controls, .jellynext-pagination) {
+    padding-block: 4px;
+}
+
+.jfc-watch .jellynext-catalog-status {
+    color: var(--jfc-muted);
+    font-size: .9rem;
+}
+
+.jellynext-dialog :is(.jellynext-watch, .jellynext-download):enabled:hover {
+    border-color: var(--jfc-bright);
+}
+
 @media (max-width: 42em) {
     #homeTab .itemsContainer:has(> .jfc-watch-tile) {
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 104px), 1fr));
@@ -1680,6 +1764,10 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
         background: linear-gradient(to top, var(--jfc-black), #080808d0 33%, #08080816 100%);
     }
 
+    .jfc-watch-feature {
+        min-height: clamp(300px, 51svh, 450px);
+    }
+
     .jfc-watch-filters > a,
     .jfc-watch-libraries summary {
         padding-inline: 10px;
@@ -1688,6 +1776,13 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 
     .jfc-watch-libraries {
         margin-inline-start: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is(.jfc-watch-art, .jellynext-discovery .jellynext-poster) img {
+        transition: none;
+        transform: none !important;
     }
 }
 

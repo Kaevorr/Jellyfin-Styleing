@@ -12,6 +12,11 @@
     const themeBase = process.env.JFC_THEME_BASE_URL || fixtureThemeBase;
     const cssUrl = themeBase + 'theme.css';
     const scriptUrl = themeBase + 'js/enhancements.js?debug';
+    const discoveryScript = process.env.JFC_JELLYNEXT_SCRIPT
+        ? fs.readFileSync(process.env.JFC_JELLYNEXT_SCRIPT)
+        : null;
+    const discoveryRequests = [];
+    const discoveryPlayback = [];
     assert(
         repo && dist && fs.existsSync(path.join(dist, 'index.html')),
         'Pass the theme repository and the compiled Jellyfin Web 12.4 dist directory.',
@@ -158,8 +163,10 @@
                     '</body>',
                     `<script>(function(){var s=document.createElement('script');s.src=${JSON.stringify(scriptUrl)};document.head.appendChild(s);})();</script></body>`,
                 );
+            if (discoveryScript) html = html.replace('</body>', '<script defer src="/_test-jellynext.js"></script></body>');
             return send(html, 'text/html');
         }
+        if (route === '/_test-jellynext.js' && discoveryScript) return send(discoveryScript, 'application/javascript');
         if (route.startsWith('/jellyfin/web/'))
             return file(dist, route.slice('/jellyfin/web/'.length));
         if (route.startsWith(fixtureThemeBase))
@@ -169,6 +176,39 @@
         const p = route.slice('/jellyfin'.length),
             low = p.toLowerCase();
         requestLog.push(p + url.search);
+        if (discoveryScript && low === '/sessions' && url.searchParams.has('deviceId')) {
+            return json([{
+                Id: 'fixture-discovery-session', DeviceId: url.searchParams.get('deviceId'),
+                UserId: userId, SupportsRemoteControl: true
+            }]);
+        }
+        if (discoveryScript && low === '/sessions/fixture-discovery-session/playing' && req.method === 'POST') {
+            discoveryPlayback.push(url.searchParams.get('itemIds'));
+            res.writeHead(204);
+            return res.end();
+        }
+        if (discoveryScript && low.startsWith('/jellynextlibrary/')) {
+            if (low.endsWith('/appearance')) return json({ css: ':root { --jellynext-card-radius: 14px; }' });
+            if (low.endsWith('/discovery/show')) return json({ linked: true, enabled: true, items: [
+                { id: 202, title: 'Trakt Fixture Show', year: 2025, canRequest: true, seasons: 3 },
+            ] });
+            if (low.endsWith('/moviecatalog')) return json({ pageCount: 2, items: [
+                { id: 101, title: url.searchParams.get('query') || 'Catalog Fixture Movie', year: 2024, canRequest: true },
+            ] });
+            if (low.endsWith('/details/show/202')) return json({
+                year: 2025, overview: 'A show recommendation.', canDownload: true,
+                watchItemId: url.searchParams.get('season') === '1' ? catalog[1].Id : null
+            });
+            if (low.endsWith('/details/movie/101')) return json({
+                year: 2024, overview: 'A movie catalog result.', canDownload: false,
+                downloadUnavailableReason: 'Ask an administrator to enable Discovery downloads for your Jellyfin user.'
+            });
+            if (low.endsWith('/discovery/show/202/request') && req.method === 'POST') {
+                discoveryRequests.push(url.searchParams.get('season'));
+                return json({ success: true });
+            }
+            return json({}, 404);
+        }
         function readJson(callback) {
             let body = '';
             req.on('data', chunk => { body += chunk; });
@@ -530,6 +570,44 @@
         await watch.getByRole('heading', { name: 'Recently Added Shows' }).waitFor();
         assert.equal(await watch.locator('progress').getAttribute('value'), '42');
         assert.equal(await page.locator('.MuiAppBar-root .jfc-watch-tab').getAttribute('aria-current'), 'page');
+        const discovery = watch.locator('[data-jellynext-discovery]');
+        if (discoveryScript) {
+            const movieDiscovery = discovery.locator('[data-jellynext-type="movies"]');
+            const showDiscovery = discovery.locator('[data-jellynext-type="shows"]');
+            await movieDiscovery.getByRole('button', { name: /Catalog Fixture Movie/ }).waitFor();
+            await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
+            await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).click();
+            assert(await movieDiscovery.getByRole('heading').evaluate(heading => document.activeElement === heading));
+            await movieDiscovery.getByRole('searchbox').fill('Fixture Search');
+            await movieDiscovery.getByRole('button', { name: 'Search movies', exact: true }).click();
+            await movieDiscovery.getByRole('button', { name: /Fixture Search/ }).waitFor();
+            await watchFilters.getByRole('link', { name: 'Movies', exact: true }).click();
+            await showDiscovery.waitFor({ state: 'detached' });
+            assert.equal(await movieDiscovery.getByRole('searchbox').inputValue(), 'Fixture Search');
+            await movieDiscovery.getByRole('button', { name: /Fixture Search/ }).click();
+            const modal = page.locator('.jellynext-dialog');
+            await modal.getByText(/Ask an administrator/).waitFor();
+            assert(await modal.getByRole('button', { name: 'Download', exact: true }).isDisabled());
+            await page.keyboard.press('Escape');
+            await modal.waitFor({ state: 'detached' });
+            await watchFilters.getByRole('link', { name: 'Shows', exact: true }).click();
+            await movieDiscovery.waitFor({ state: 'detached' });
+            await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).click();
+            await modal.getByText('A show recommendation.').waitFor();
+            assert(await modal.getByRole('button', { name: 'Watch', exact: true }).isEnabled());
+            assert.equal(await modal.evaluate(node => getComputedStyle(node).getPropertyValue('--jellynext-card-radius').trim()), '14px');
+            await modal.getByRole('combobox').selectOption('2');
+            await modal.getByRole('button', { name: 'Download', exact: true }).click();
+            await modal.getByText(/Download requested/).waitFor();
+            assert.deepEqual(discoveryRequests, ['2']);
+            await modal.getByRole('combobox').selectOption('1');
+            await modal.getByRole('button', { name: 'Watch', exact: true }).click();
+            await modal.waitFor({ state: 'detached' });
+            assert.deepEqual(discoveryPlayback, [catalog[1].Id]);
+            await watchFilters.getByRole('link', { name: 'All', exact: true }).click();
+        } else {
+            assert.equal(await watch.locator('.jfc-watch-discover').isVisible(), false);
+        }
         if (process.env.JFC_SCREENSHOTS)
             await page.screenshot({ path: path.join(process.env.JFC_SCREENSHOTS, 'watch-desktop.png') });
         await watchFilters.getByRole('link', { name: 'Shows', exact: true }).click();

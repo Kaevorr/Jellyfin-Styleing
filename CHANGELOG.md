@@ -2,6 +2,8 @@
 
 ## Movies & Shows
 
+- Refined the featured artwork, browse controls, and poster rows, and styled JellyNext Discovery and its title dialog to match.
+- Kept JellyNext's catalog state when switching between filters that include the same shelf.
 - Combined the video libraries in one Modern navigation tab and Home tile, with featured artwork, separate category filters, and rows for recent titles and unfinished playback.
 
 ## Music Playlists

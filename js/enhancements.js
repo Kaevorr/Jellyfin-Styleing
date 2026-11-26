@@ -1627,15 +1627,18 @@
         }
         if (!shelf.track.childElementCount) return;
         shelf.body.append(shelf.track);
-        view.panel.append(shelf.section);
+        (progress ? view.resume : view.recent).append(shelf.section);
         shelf.updateArrows();
         view.arrows.push(shelf.updateArrows);
     }
 
     function renderWatch(view, data) {
-        const { session, filter, panel } = view;
+        const { session, filter, chrome, discovery, resume, recent } = view;
         view.data = data;
         view.arrows = [];
+        discovery.dataset.jellynextDiscovery = filter === 'tvshows' ? 'shows' : filter;
+        resume.replaceChildren();
+        recent.replaceChildren();
         const matches = item => filter === 'all' || (filter === 'movies' ? item.Type === 'Movie' : item.Type !== 'Movie');
         const latest = data?.latest.filter(matches) || [];
         const featured = latest.find(item => item.BackdropImageTags?.length && watchDetails(item, session.client)) || latest[0];
@@ -1672,11 +1675,21 @@
             libraries.append(link);
         });
         controls.append(libraries);
-        panel.replaceChildren(controls, hero);
+        const discover = make('button', 'jfc-watch-discover', 'Discovery');
+        discover.type = 'button';
+        discover.addEventListener('click', () => {
+            const heading = discovery.querySelector('.jellynext-discovery:not([hidden]) .jellynext-heading');
+            if (!heading) return;
+            heading.tabIndex = -1;
+            heading.focus({ preventScroll: true });
+            heading.scrollIntoView({ block: 'start' });
+        });
+        controls.append(discover);
+        chrome.replaceChildren(controls, hero);
         if (!data) {
             const status = make('p', 'jfc-watch-status', 'Loading your library…');
             status.setAttribute('role', 'status');
-            panel.append(status);
+            recent.append(status);
             return;
         }
         watchRow(view, 'Continue Watching', data.resume.filter(matches), true);
@@ -1688,15 +1701,14 @@
                 const retry = make('button', 'jfc-watch-details', 'Retry');
                 retry.type = 'button';
                 retry.addEventListener('click', () => {
-                    session.rows = null;
-                    session.result = null;
-                    watchView = null;
-                    panel.remove();
-                    schedule();
+                    renderWatch(view);
+                    loadWatchRows(session).then(data => {
+                        if (watchView === view) renderWatch(view, data);
+                    });
                 });
                 status.append(' ', retry);
             }
-            panel.append(status);
+            recent.append(status);
         }
     }
 
@@ -1733,14 +1745,25 @@
         if (!page) return clearWatchPage();
         const requested = params.get('filter');
         const filter = session.libraries.some(library => library.CollectionType === requested) ? requested : 'all';
-        if (watchView?.page === page && watchView.filter === filter && watchView.panel.isConnected) {
-            watchView.arrows.forEach(update => update());
+        if (watchView?.page === page && watchView.panel.isConnected) {
+            if (watchView.filter !== filter) {
+                watchView.filter = filter;
+                renderWatch(watchView, watchView.data);
+                watchView.chrome.querySelector('.jfc-watch-filters a[aria-current]')?.focus({ preventScroll: true });
+            } else {
+                watchView.arrows.forEach(update => update());
+            }
             return;
         }
         const entering = !watchView;
         clearWatchPage();
         const panel = make('section', 'jfc-watch');
-        const view = { session, page, panel, filter, arrows: [] };
+        const chrome = make('div');
+        const resume = make('div');
+        const discovery = make('div');
+        const recent = make('div');
+        panel.append(chrome, resume, discovery, recent);
+        const view = { session, page, panel, chrome, resume, discovery, recent, filter, arrows: [] };
         watchView = view;
         page.classList.add('jfc-watch-active');
         page.prepend(panel);
