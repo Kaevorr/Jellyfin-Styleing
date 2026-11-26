@@ -599,6 +599,20 @@
             const showDiscovery = discovery.locator('[data-jellynext-type="shows"]');
             await movieDiscovery.getByRole('button', { name: /Catalog Fixture Movie/ }).waitFor();
             await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
+            assert(await watch.evaluate(panel => {
+                const shelf = panel.querySelector('.jfc-watch-resume-shelf');
+                const fallback = [panel, panel.parentElement].map(parent => {
+                    const row = document.createElement('section');
+                    row.className = 'jellynext-discovery';
+                    row.textContent = 'Discovery fallback';
+                    parent.prepend(row);
+                    return row;
+                });
+                const rows = [...panel.querySelector('[data-jellynext-discovery]').children, ...fallback];
+                const correctlyOrdered = rows.every(row => row.getBoundingClientRect().top >= shelf.getBoundingClientRect().bottom);
+                fallback.forEach(row => row.remove());
+                return correctlyOrdered;
+            }));
             await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).click();
             assert(await movieDiscovery.getByRole('heading').evaluate(heading => document.activeElement === heading));
             await movieDiscovery.getByRole('searchbox').fill('Fixture Search');
@@ -638,6 +652,15 @@
         assert.equal(await watch.getByRole('heading', { name: 'Recently Added Movies' }).count(), 0);
         await page.setViewportSize({ width: 390, height: 844 });
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+        await watch.getByRole('button', { name: 'Resume Fixture Movie', exact: true }).waitFor();
+        if (discoveryScript) {
+            await discovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
+            assert(await watch.evaluate(panel => {
+                const shelf = panel.querySelector('.jfc-watch-resume-shelf');
+                const shows = panel.querySelector('[data-jellynext-type="shows"]');
+                return shows.getBoundingClientRect().top >= shelf.getBoundingClientRect().bottom;
+            }));
+        }
         await page.getByRole('button', { name: 'Open Menu' }).click();
         const drawerWatch = page.locator('.MuiDrawer-root .jfc-watch-tab');
         await drawerWatch.click();

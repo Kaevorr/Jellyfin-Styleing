@@ -2,6 +2,7 @@
 
 ## Movies & Shows
 
+- Kept Continue Watching above JellyNext Discovery while loading and across all filters.
 - Put Continue Watching first and added native resume actions. Updated video title pages and the playback overlay.
 - Refined the featured artwork, browse controls, and poster rows, and styled JellyNext Discovery and its title dialog to match.
 - Kept JellyNext's catalog state when switching between filters that include the same shelf.

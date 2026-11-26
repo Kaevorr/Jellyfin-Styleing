@@ -1591,7 +1591,12 @@
                 if (result.status === 'fulfilled') result.value.forEach(item => unique.set(item.Id, item));
             }
             const latest = [...unique.values()].sort((a, b) => (Date.parse(b.DateCreated) || 0) - (Date.parse(a.DateCreated) || 0));
-            session.result = { latest, resume: results.at(-1).value || [], failed: results.some(result => result.status === 'rejected') };
+            session.result = {
+                latest,
+                resume: results.at(-1).value || [],
+                resumeUnavailable: results.at(-1).status === 'rejected',
+                failed: results.some(result => result.status === 'rejected')
+            };
             session.loadedAt = Date.now();
             return session.result;
         });
@@ -1662,6 +1667,7 @@
         (progress ? view.resume : view.recent).append(shelf.section);
         shelf.updateArrows();
         view.arrows.push(shelf.updateArrows);
+        return true;
     }
 
     function renderWatch(view, data) {
@@ -1719,16 +1725,26 @@
         controls.append(discover);
         chrome.replaceChildren(controls);
         spotlight.replaceChildren(hero);
+        if (!watchRow(view, 'Continue Watching', data?.resume || [], true)) {
+            const section = make('section', 'jfc-watch-row jfc-watch-resume-shelf');
+            const heading = make('h2', 'jfc-music-shelf-title');
+            heading.append(icon('play_arrow'), make('span', '', 'Continue Watching'));
+            const status = make('p', 'jfc-watch-meta', data?.resumeUnavailable
+                ? 'Watch progress could not be loaded.'
+                : data ? 'Movies and episodes you start will appear here.' : 'Loading your watch progress…');
+            status.setAttribute('role', 'status');
+            section.append(heading, status);
+            resume.append(section);
+        }
         if (!data) {
             const status = make('p', 'jfc-watch-status', 'Loading your library…');
             status.setAttribute('role', 'status');
             recent.append(status);
             return;
         }
-        watchRow(view, 'Continue Watching', data.resume.filter(matches), true);
         watchRow(view, 'Recently Added Movies', latest.filter(item => item.Type === 'Movie').slice(0, 20));
         watchRow(view, 'Recently Added Shows', latest.filter(item => item.Type === 'Series').slice(0, 20));
-        if (data.failed || (!latest.length && !data.resume.some(matches))) {
+        if (data.failed || (!latest.length && !data.resume.length)) {
             const status = make('p', 'jfc-watch-status', data.failed ? 'Some titles could not be loaded.' : 'No titles have been added to this view yet.');
             if (data.failed) {
                 const retry = make('button', 'jfc-watch-details', 'Retry');
@@ -1794,8 +1810,8 @@
         const entering = !watchView;
         clearWatchPage();
         const panel = make('section', 'jfc-watch');
-        const chrome = make('div');
-        const resume = make('div');
+        const chrome = make('div', 'jfc-watch-chrome');
+        const resume = make('div', 'jfc-watch-resume-slot');
         const spotlight = make('div');
         const discovery = make('div');
         const recent = make('div');
