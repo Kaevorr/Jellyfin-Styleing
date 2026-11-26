@@ -518,6 +518,7 @@
         await page.setViewportSize({ width: 1600, height: 1000 });
         const watchTile = page.locator('#homeTab .jfc-watch-tile');
         await watchTile.waitFor();
+        await page.locator('.MuiAppBar-root .jfc-watch-tab').waitFor();
         assert.equal(await page.locator('.MuiAppBar-root .jfc-watch-tab').count(), 1);
         assert.equal(await page.locator('#homeTab .card[data-jfc-kind="movies"]').isVisible(), false);
         assert.equal(await page.locator('#homeTab .card[data-jfc-kind="tvshows"]').isVisible(), false);
