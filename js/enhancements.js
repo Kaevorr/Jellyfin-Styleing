@@ -1815,7 +1815,7 @@
         const spotlight = make('div');
         const discovery = make('div');
         const recent = make('div');
-        panel.append(chrome, resume, spotlight, discovery, recent);
+        panel.append(chrome, spotlight, resume, discovery, recent);
         const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [] };
         watchView = view;
         page.classList.add('jfc-watch-active');

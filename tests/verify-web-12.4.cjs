@@ -574,8 +574,12 @@
         await watch.getByRole('heading', { name: 'Recently Added Movies' }).waitFor();
         await watch.getByRole('heading', { name: 'Recently Added Shows' }).waitFor();
         assert.equal(await watch.locator('progress').getAttribute('value'), '42');
-        assert(await watch.locator('.jfc-watch-resume-shelf').evaluate(shelf =>
-            !!(shelf.compareDocumentPosition(document.querySelector('.jfc-watch-feature')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+        assert(await watch.evaluate(panel => {
+            const ordered = ['.jfc-watch-feature', '.jfc-watch-resume-shelf', '[data-jellynext-discovery]', '.jfc-watch-row:not(.jfc-watch-resume-shelf)']
+                .map(selector => panel.querySelector(selector));
+            return ordered.every((node, index) => node && (!index ||
+                (ordered[index - 1].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)));
+        }));
         await page.evaluate(() => {
             const probe = event => {
                 const target = event.target;
