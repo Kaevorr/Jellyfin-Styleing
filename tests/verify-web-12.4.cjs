@@ -526,6 +526,11 @@
         const progress = page.locator('#homeTab .itemProgressBarForeground');
         await progress.waitFor();
         assert.match(await progress.getAttribute('style'), /42%/);
+        assert(await progress.evaluate(node => {
+            const section = node.closest('.verticalSection');
+            return Array.from(section.parentElement.children).every(child => child === section ||
+                !child.getClientRects().length || child.getBoundingClientRect().top >= section.getBoundingClientRect().top);
+        }));
         assert.match(
             await progress.evaluate(
                 (node) => getComputedStyle(node).backgroundImage,
@@ -550,7 +555,7 @@
                 };
             });
             assert.match(art.image, /home-crimson\.svg/);
-            assert(art.height > art.tilesBottom, 'Home artwork should extend below the library tiles');
+            assert(art.height > art.tilesBottom, `Home artwork (${art.height}px) should extend below the library tiles (${art.tilesBottom}px) at ${width}px`);
             assert.equal(art.viewportWidth, width);
             if (process.env.JFC_SCREENSHOTS)
                 await page.screenshot({ path: path.join(process.env.JFC_SCREENSHOTS, `home-art-${width}.png`) });
@@ -569,6 +574,24 @@
         await watch.getByRole('heading', { name: 'Recently Added Movies' }).waitFor();
         await watch.getByRole('heading', { name: 'Recently Added Shows' }).waitFor();
         assert.equal(await watch.locator('progress').getAttribute('value'), '42');
+        assert(await watch.locator('.jfc-watch-resume-shelf').evaluate(shelf =>
+            !!(shelf.compareDocumentPosition(document.querySelector('.jfc-watch-feature')) & Node.DOCUMENT_POSITION_FOLLOWING)));
+        await page.evaluate(() => {
+            const probe = event => {
+                const target = event.target;
+                if (target.dataset.action !== 'resume' || !target.hidden) return;
+                window.fixtureVideoResume = { ...target.dataset, insideNative: !!target.closest('.padded-bottom-page .itemsContainer') };
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.removeEventListener('click', probe, true);
+            };
+            document.addEventListener('click', probe, true);
+        });
+        await watch.getByRole('button', { name: 'Resume Fixture Movie', exact: true }).click();
+        assert.deepEqual(await page.evaluate(() => window.fixtureVideoResume), {
+            action: 'resume', id: resume.Id, serverid: id, type: 'Movie', mediatype: 'Video',
+            positionticks: '420000000', insideNative: true
+        });
         assert.equal(await page.locator('.MuiAppBar-root .jfc-watch-tab').getAttribute('aria-current'), 'page');
         const discovery = watch.locator('[data-jellynext-discovery]');
         if (discoveryScript) {
@@ -626,6 +649,7 @@
             await page.screenshot({ path: path.join(process.env.JFC_SCREENSHOTS, 'watch-mobile.png') });
         await watch.getByRole('link', { name: 'View details' }).click();
         await page.locator('#itemDetailPage').waitFor();
+        await page.locator('#itemDetailPage.jfc-video-detail').waitFor();
         await watch.waitFor({ state: 'detached' });
         await page.goBack();
         await watch.getByRole('heading', { name: 'Fixture Series', exact: true }).waitFor();

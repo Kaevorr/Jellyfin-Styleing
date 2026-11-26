@@ -128,7 +128,7 @@ body {
 :where(.layout-desktop, .layout-mobile) #homeTab {
     --jfc-hero-height: clamp(236px, 15.55vw, 330px);
     --jfc-tile-height: clamp(110px, 9.3vw, 179px);
-    --jfc-home-art-height: max(calc(var(--jfc-hero-height) + var(--jfc-tile-height) + 4.5rem), 100vw / 3);
+    --jfc-home-art-height: max(calc(var(--jfc-hero-height) + var(--jfc-tile-height) + 4.5rem + var(--jfc-resume-art-extension, 0px)), 100vw / 3);
     --jfc-hero-indent: clamp(20px, 6.55vw, 130px);
     --jfc-hero-top: clamp(32px, 2.22vw, 53px);
     --jfc-title-size: clamp(3rem, 4.6vw, 5.6rem);
@@ -438,6 +438,20 @@ body {
 }
 
 /* Home shelves keep Jellyfin's scrollers, item actions, and progress values. */
+:where(.layout-desktop, .layout-mobile) #homeTab > .sections.homeSectionsContainer {
+    display: flex;
+    flex-direction: column;
+    reading-flow: flex-visual;
+}
+
+#homeTab:has(> .sections > .verticalSection:not(.hide) .itemsContainer[data-monitor="videoplayback,markplayed"] .card) {
+    --jfc-resume-art-extension: clamp(210px, 18vw, 330px);
+}
+
+#homeTab > .sections.homeSectionsContainer > .verticalSection:has(.itemsContainer[data-monitor="videoplayback,markplayed"]) {
+    order: -1;
+}
+
 :where(.layout-desktop, .layout-mobile) #homeTab :is(.padded-left, [is="emby-scroller"]) {
     padding-inline-start: max(var(--jfc-gutter), env(safe-area-inset-left));
 }
@@ -1639,6 +1653,56 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     flex-basis: clamp(184px, 22vw, 365px);
 }
 
+.jfc-watch-resume-shelf {
+    padding-top: 16px;
+    padding-bottom: 10px;
+    background: linear-gradient(180deg, #151215, var(--jfc-black));
+}
+
+.jfc-watch-resume-tile {
+    flex: 0 0 clamp(200px, 21vw, 338px);
+    min-width: 0;
+    scroll-snap-align: start;
+    border: 1px solid #ffffff1f;
+    border-radius: 12px;
+    background: #161316;
+}
+
+.jfc-watch-resume-tile .jfc-watch-card {
+    padding: 8px;
+}
+
+.jfc-watch-card-actions {
+    display: flex;
+    gap: 6px;
+    padding: 0 8px 8px;
+}
+
+.jfc-watch-card-actions > :is(button, a) {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 9px;
+    min-height: 40px;
+    border: 1px solid #ffffff30;
+    border-radius: 7px;
+    background: #252024;
+    color: var(--jfc-white);
+    text-decoration: none;
+    font: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+.jfc-watch-card-actions button {
+    border-color: var(--jfc-crimson);
+    background: var(--jfc-crimson);
+}
+
+.jfc-watch-card-actions > :is(button, a):hover {
+    border-color: var(--jfc-bright);
+}
+
 .jfc-watch-card strong {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1783,6 +1847,123 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     :is(.jfc-watch-art, .jellynext-discovery .jellynext-poster) img {
         transition: none;
         transform: none !important;
+    }
+}
+
+/* Video title pages and the native playback overlay. */
+#itemDetailPage.jfc-video-detail {
+    background: var(--jfc-black);
+    color: var(--jfc-white);
+}
+
+#itemDetailPage.jfc-video-detail .itemBackdrop {
+    background-position: center 34%;
+    box-shadow: inset 0 -13rem 9rem -5rem var(--jfc-black);
+}
+
+#itemDetailPage.jfc-video-detail .detailRibbon {
+    gap: 12px;
+    height: auto;
+    min-height: 8rem;
+    padding-block: 16px 22px;
+    background: linear-gradient(0deg, var(--jfc-black), #100d10ed 70%, #0d0b0cb8);
+}
+
+#itemDetailPage.jfc-video-detail .itemName {
+    font-size: clamp(2rem, 4.45vw, 4.8rem);
+    font-weight: 820;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+
+#itemDetailPage.jfc-video-detail .mainDetailButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#itemDetailPage.jfc-video-detail .mainDetailButtons .detailButton {
+    min-height: 44px;
+    min-width: 44px;
+    border: 1px solid #ffffff35;
+    border-radius: 9px;
+}
+
+#itemDetailPage.jfc-video-detail :is(.btnPlay, .btnReplay) {
+    padding-inline: 16px;
+}
+
+#itemDetailPage.jfc-video-detail :is(.overview, .itemGenres, .tagline) {
+    max-width: 72ch;
+    line-height: 1.6;
+}
+
+#itemDetailPage.jfc-video-detail :is(.cardScalable, .cardImageContainer) {
+    border-radius: 12px;
+}
+
+#itemDetailPage.jfc-video-detail .detailVerticalSection .sectionTitle {
+    padding-block-start: .25em;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .videoOsdBottom {
+    background: linear-gradient(0deg, #030203fa, #0a070bdc 46%, transparent);
+    padding-top: clamp(34px, 9vh, 104px);
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .osdControls {
+    min-width: 0;
+    padding-inline: clamp(12px, 2.6vw, 48px);
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .osdTitle {
+    font-size: clamp(1rem, 2.3vw, 1.7rem);
+    font-weight: 780;
+    line-height: 1.2;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .osdPositionSlider {
+    accent-color: var(--jfc-red);
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .osdPositionText,
+:where(html:not(.layout-tv)) #videoOsdPage .osdDurationText {
+    font-variant-numeric: tabular-nums;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .buttons {
+    gap: 5px;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .buttons button {
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 10px;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .btnPause {
+    border: 1px solid #ff7886a3;
+    background: #6a1121;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage .buttons button:hover {
+    background-color: #722536;
+}
+
+:where(html:not(.layout-tv)) #videoOsdPage :is(button, input):focus-visible {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 1px;
+}
+
+@media (max-width: 42em) {
+    #itemDetailPage.jfc-video-detail .detailRibbon {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #itemDetailPage.jfc-video-detail .detailPagePrimaryContent {
+        padding-inline: 5%;
     }
 }
 

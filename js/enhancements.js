@@ -1602,6 +1602,7 @@
         const { client } = view.session;
         const shelf = makeShelf({ title, noun: title.toLowerCase().replaceAll(' ', '-'), icon: progress ? 'play_arrow' : 'layers' });
         shelf.section.classList.add('jfc-watch-row');
+        shelf.section.classList.toggle('jfc-watch-resume-shelf', progress);
         shelf.track.classList.toggle('jfc-watch-resume', progress);
         for (const item of items) {
             const href = watchDetails(item, client);
@@ -1623,7 +1624,38 @@
             const name = make('strong', '', item.SeriesName && item.Type === 'Episode' ? item.SeriesName : item.Name);
             const note = item.Type === 'Episode' ? item.Name : [item.ProductionYear, item.Type === 'Movie' ? 'Movie' : 'Series'].filter(Boolean).join(' · ');
             card.append(art, name, make('span', 'jfc-watch-meta', note));
-            shelf.track.append(card);
+            if (!progress || !['Movie', 'Episode'].includes(item.Type)) {
+                shelf.track.append(card);
+                continue;
+            }
+            const tile = make('article', 'jfc-watch-resume-tile');
+            const actions = make('div', 'jfc-watch-card-actions');
+            const resume = musicButton('button', 'Resume', 'play_arrow');
+            resume.type = 'button';
+            resume.setAttribute('aria-label', 'Resume ' + (name.textContent || 'video'));
+            resume.addEventListener('click', () => {
+                const native = view.page.querySelector(':scope > .padded-bottom-page .itemsContainer');
+                if (native && watchView === view) {
+                    const trigger = make('button', 'itemAction');
+                    trigger.hidden = true;
+                    Object.assign(trigger.dataset, {
+                        action: 'resume', id: item.Id, serverid: item.ServerId || client.serverId(),
+                        type: item.Type, mediatype: 'Video', positionticks: item.UserData?.PlaybackPositionTicks || 0
+                    });
+                    native.append(trigger);
+                    try {
+                        if (!trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))) return;
+                    } finally {
+                        trigger.remove();
+                    }
+                }
+                location.hash = href;
+            });
+            const info = make('a', '', 'Details');
+            info.href = href;
+            actions.append(resume, info);
+            tile.append(card, actions);
+            shelf.track.append(tile);
         }
         if (!shelf.track.childElementCount) return;
         shelf.body.append(shelf.track);
@@ -1633,7 +1665,7 @@
     }
 
     function renderWatch(view, data) {
-        const { session, filter, chrome, discovery, resume, recent } = view;
+        const { session, filter, chrome, spotlight, discovery, resume, recent } = view;
         view.data = data;
         view.arrows = [];
         discovery.dataset.jellynextDiscovery = filter === 'tvshows' ? 'shows' : filter;
@@ -1685,7 +1717,8 @@
             heading.scrollIntoView({ block: 'start' });
         });
         controls.append(discover);
-        chrome.replaceChildren(controls, hero);
+        chrome.replaceChildren(controls);
+        spotlight.replaceChildren(hero);
         if (!data) {
             const status = make('p', 'jfc-watch-status', 'Loading your library…');
             status.setAttribute('role', 'status');
@@ -1742,7 +1775,10 @@
         const params = new URLSearchParams(location.hash.split('?')[1]);
         const page = params.get('jfc') === 'watch' && (route === '#/movies' || route === '#/tv') &&
             document.querySelector(route === '#/movies' ? '#moviesPage' : '#tvshowsPage');
-        if (!page) return clearWatchPage();
+        if (!page) {
+            if (route === '#/video' && watchView) session.loadedAt = Date.now() - 60001;
+            return clearWatchPage();
+        }
         const requested = params.get('filter');
         const filter = session.libraries.some(library => library.CollectionType === requested) ? requested : 'all';
         if (watchView?.page === page && watchView.panel.isConnected) {
@@ -1760,10 +1796,11 @@
         const panel = make('section', 'jfc-watch');
         const chrome = make('div');
         const resume = make('div');
+        const spotlight = make('div');
         const discovery = make('div');
         const recent = make('div');
-        panel.append(chrome, resume, discovery, recent);
-        const view = { session, page, panel, chrome, resume, discovery, recent, filter, arrows: [] };
+        panel.append(chrome, resume, spotlight, discovery, recent);
+        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [] };
         watchView = view;
         page.classList.add('jfc-watch-active');
         page.prepend(panel);
@@ -1774,6 +1811,25 @@
             if (data === view.data) return;
             if (watchView === view && location.hash.includes('jfc=watch')) renderWatch(view, data);
         });
+    }
+
+    let videoDetail;
+    function updateVideoDetail(enabled, route) {
+        const page = enabled && route === '#/details' && document.querySelector('#itemDetailPage:not(.hide)');
+        const client = window.ApiClient;
+        const user = client?.getCurrentUserId?.();
+        const hash = location.hash;
+        if (videoDetail?.page === page && videoDetail.hash === hash && videoDetail.client === client && videoDetail.user === user) return;
+        videoDetail?.page?.classList.remove('jfc-video-detail');
+        videoDetail = null;
+        const id = new URLSearchParams(hash.split('?')[1]).get('id');
+        if (!page || !id || !user || !client.getItem) return;
+        const current = { page, hash, client, user };
+        videoDetail = current;
+        withRequestTimeout(() => client.getItem(user, id)).then(item => {
+            if (videoDetail !== current || location.hash !== hash || window.ApiClient !== client || client.getCurrentUserId() !== user) return;
+            page.classList.toggle('jfc-video-detail', ['Movie', 'Series', 'Season', 'Episode'].includes(item.Type));
+        }).catch(() => {});
     }
 
     function refresh() {
@@ -1833,6 +1889,7 @@
                 headerNav?.remove();
             }
         }
+        updateVideoDetail(cssReady && desktopOrMobile, route);
         updateWatch(cssReady && desktopOrMobile, modernHeader, homeActive ? sections : null, route);
 
         const pageSelectors = { '#/movies': '#moviesPage', '#/tv': '#tvshowsPage, #tvRecommendedPage',
