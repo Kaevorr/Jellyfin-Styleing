@@ -1385,6 +1385,635 @@ html:has(#musicPage.jfc-music-albums-active.jfc-music-empty-library)
     }
 }
 
+/* Combined Movies and Shows navigation and browse view. */
+.MuiAppBar-root:has(.jfc-watch-tab) a:is([href^="#/movies?"], [href^="#/tv?"]):not([data-jfc-watch-entry]),
+.MuiDrawer-root:has(.jfc-watch-tab) .MuiListItem-root:has(> a:is([href^="#/movies?"], [href^="#/tv?"]):not([data-jfc-watch-entry])):not(:has(> .jfc-watch-tab)),
+.MuiDrawer-root:has(.jfc-watch-tab) a:is([href^="#/movies?"], [href^="#/tv?"]):not([data-jfc-watch-entry]),
+html:has(.MuiAppBar-root .jfc-watch-tab) #user-view-overflow-menu a:is([href^="#/movies?"], [href^="#/tv?"]),
+#homeTab .itemsContainer:has(> .jfc-watch-tile) > .card:is([data-jfc-kind="movies"], [data-jfc-kind="tvshows"]),
+.jfc-watch-active > .padded-bottom-page,
+html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-controls="library-view-menu"]) {
+    display: none;
+}
+
+.jfc-watch-tab,
+.jfc-watch-tile,
+.jfc-watch-filters a,
+.jfc-watch-details {
+    display: inline-flex;
+    align-items: center;
+    gap: .55em;
+    color: var(--jfc-white);
+    text-decoration: none;
+}
+
+.jfc-watch-tab {
+    min-height: 42px;
+    padding-inline: 12px;
+    border-radius: 999px;
+    font-size: .875rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.MuiDrawer-root .jfc-watch-tab {
+    box-sizing: border-box;
+    width: 100%;
+    padding-inline: 16px;
+    min-height: 48px;
+}
+
+.jfc-watch-tab:is(:hover, [aria-current]),
+.jfc-watch-filters > a:is(:hover, [aria-current]) {
+    background: linear-gradient(145deg, #4d0a14, var(--jfc-crimson));
+}
+
+#homeTab .itemsContainer:has(> .jfc-watch-tile) {
+    grid-template-columns: repeat(auto-fit, minmax(max(28%, min(100%, 250px)), 1fr));
+}
+
+.jfc-watch-tile {
+    box-sizing: border-box;
+    justify-content: center;
+    min-height: var(--jfc-tile-height);
+    padding: 6px;
+    border: 1px solid #ff99963f;
+    border-radius: var(--jfc-radius);
+    background: var(--jfc-tile-background);
+    font-size: clamp(1rem, 2.65vw, 3rem);
+    font-weight: 800;
+    text-align: center;
+}
+
+.jfc-watch-tile svg {
+    color: var(--jfc-bright);
+    font-size: 1.3em;
+}
+
+.jfc-watch-tile:is(:hover, :focus-visible) {
+    border-color: var(--jfc-bright);
+    box-shadow: 0 0 22px #e5091466;
+}
+
+.jfc-watch {
+    --jfc-watch-gutter: clamp(14px, 4vw, 80px);
+    box-sizing: border-box;
+    min-height: calc(100dvh - 4rem);
+    padding-bottom: 6rem;
+    color: var(--jfc-white);
+    background: var(--jfc-black);
+}
+
+.jfc-watch-filters {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px var(--jfc-watch-gutter);
+    border-bottom: 1px solid #fff2;
+    background: linear-gradient(100deg, #141114, #2b0b13 80%, #141114);
+}
+
+.jfc-watch-filters > a,
+.jfc-watch-libraries summary {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid #fff3;
+    border-radius: 8px;
+    background: var(--jfc-panel);
+    font-weight: 700;
+}
+
+.jfc-watch-libraries {
+    margin-inline-start: auto;
+}
+
+.jfc-watch-libraries summary {
+    cursor: pointer;
+}
+
+.jfc-watch-libraries[open] {
+    align-self: start;
+}
+
+.jfc-watch-libraries a {
+    display: flex;
+    min-height: 44px;
+    padding-inline: 12px;
+    overflow-wrap: anywhere;
+}
+
+.jfc-watch-libraries a:hover {
+    color: var(--jfc-bright);
+}
+
+.jfc-watch-feature {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: end;
+    box-sizing: border-box;
+    min-height: clamp(310px, 41vw, 650px);
+    padding: clamp(24px, 6vw, 105px) var(--jfc-watch-gutter) clamp(32px, 5vw, 85px);
+    background:
+        var(--jfc-mountains) center bottom / 100% 85% no-repeat,
+        radial-gradient(ellipse at 82% 35%, #831b33, #201018 44%, var(--jfc-black) 78%);
+}
+
+.jfc-watch-feature > img,
+.jfc-watch-feature::after {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+}
+
+.jfc-watch-feature > img {
+    object-fit: cover;
+    object-position: 65% 35%;
+}
+
+.jfc-watch-feature::after {
+    content: "";
+    z-index: -1;
+    background: linear-gradient(to top, var(--jfc-black), #080808b0 20%, transparent 70%),
+        linear-gradient(90deg, #080808fa, #080808af 31%, transparent 80%);
+}
+
+.jfc-watch-feature-copy {
+    max-width: min(100%, 62ch);
+}
+
+.jfc-watch-kicker {
+    color: var(--jfc-focus);
+    font-weight: 750;
+    letter-spacing: .2em;
+}
+
+.jfc-watch-feature h1 {
+    margin: 0;
+    font-size: clamp(2.3rem, 6vw, 6rem);
+    font-weight: 820;
+    line-height: 1;
+    letter-spacing: -.045em;
+    overflow-wrap: anywhere;
+}
+
+.jfc-watch-overview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-size: clamp(.95rem, 1.4vw, 1.25rem);
+}
+
+.jfc-watch-meta {
+    color: var(--jfc-muted);
+    font-size: .88rem;
+}
+
+.jfc-watch-details {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--jfc-bright);
+    border-radius: 8px;
+    background: var(--jfc-crimson);
+    font: inherit;
+    font-weight: 720;
+    cursor: pointer;
+}
+
+.jfc-watch-details:hover {
+    background: #a70a1a;
+}
+
+.jfc-watch-row,
+.jfc-watch-status {
+    margin: 0;
+    padding: 0 var(--jfc-watch-gutter) 20px;
+}
+
+.jfc-watch-row .jfc-music-track {
+    scroll-snap-type: x proximity;
+}
+
+.jfc-watch-card {
+    flex: 0 0 clamp(116px, 13vw, 218px);
+    display: grid;
+    align-content: start;
+    gap: 4px;
+    min-width: 0;
+    scroll-snap-align: start;
+    color: inherit;
+    text-decoration: none;
+}
+
+.jfc-watch-resume .jfc-watch-card {
+    flex-basis: clamp(184px, 22vw, 365px);
+}
+
+.jfc-watch-card strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jfc-watch-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    aspect-ratio: 2 / 3;
+    border: 1px solid #fff2;
+    border-radius: 10px;
+    color: var(--jfc-focus);
+    background: linear-gradient(147deg, #35141d, var(--jfc-panel));
+}
+
+.jfc-watch-resume .jfc-watch-art {
+    aspect-ratio: 16 / 9;
+}
+
+.jfc-watch-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.jfc-watch-card:is(:hover, :focus-visible) .jfc-watch-art {
+    border-color: var(--jfc-bright);
+    box-shadow: 0 0 12px #e5091459;
+}
+
+.jfc-watch-progress {
+    position: absolute;
+    inset: auto 8px 8px;
+    width: calc(100% - 16px);
+    height: 6px;
+    color-scheme: dark;
+    accent-color: var(--jfc-bright);
+}
+
+:is(.jfc-watch-tab, .jfc-watch-tile, .jfc-watch :is(a, button, summary, [tabindex])):focus-visible {
+    outline: 2px solid var(--jfc-focus);
+    outline-offset: 2px;
+}
+
+@media (max-width: 42em) {
+    #homeTab .itemsContainer:has(> .jfc-watch-tile) {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 104px), 1fr));
+    }
+
+    .jfc-watch-tile {
+        flex-direction: column;
+        gap: 4px;
+        font-size: .88rem;
+    }
+
+    .jfc-watch-feature::after {
+        background: linear-gradient(to top, var(--jfc-black), #080808d0 33%, #08080816 100%);
+    }
+
+    .jfc-watch-filters > a,
+    .jfc-watch-libraries summary {
+        padding-inline: 10px;
+        font-size: .9rem;
+    }
+
+    .jfc-watch-libraries {
+        margin-inline-start: 0;
+    }
+}
+
+/* Music dashboard playlists and audio-only actions. */
+html:has(#musicPage.jfc-music-playlist-active)
+.MuiAppBar-root .MuiToolbar-root:has(> button[aria-controls="library-view-menu"]),
+#musicPage.jfc-music-playlist-active > .padded-bottom-page {
+    display: none;
+}
+
+.jfc-music-playlist-shell {
+    padding-block: 12px 26px;
+}
+
+.jfc-music-playlist-panel,
+.jfc-music-playlist-shelf {
+    padding: clamp(12px, 2vw, 24px);
+    border: 1px solid #fff2;
+    border-radius: var(--jfc-radius);
+    background: linear-gradient(145deg, #341118, var(--jfc-panel) 58%);
+}
+
+.jfc-music-playlist-heading,
+.jfc-music-playlist-actions,
+.jfc-music-playlist-sync {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.jfc-music-playlist-heading {
+    justify-content: space-between;
+    margin-block-end: 12px;
+}
+
+.jfc-music-playlist-heading > :is(h2, a),
+.jfc-music-playlist-detail-heading h2 {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.2vw, 1.9rem);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.jfc-music-playlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr));
+    gap: 10px;
+}
+
+.jfc-music-playlist-card {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #fff2;
+    border-radius: var(--jfc-radius);
+    background: var(--jfc-panel);
+}
+
+.jfc-music-playlist-card:focus-within,
+.jfc-music-playlist-card:hover {
+    border-color: var(--jfc-crimson);
+}
+
+.jfc-music-playlist-link {
+    color: var(--jfc-white);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.jfc-music-playlist-link:hover {
+    color: var(--jfc-bright);
+}
+
+.jfc-music-playlist-card > a {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 10px;
+    font-weight: 700;
+}
+
+.jfc-music-playlist-card > a > .jfc-music-playlist-art {
+    grid-row: 1 / span 2;
+}
+
+.jfc-music-playlist-card > a > .jfc-music-playlist-meta {
+    grid-column: 2;
+}
+
+.jfc-music-playlist-card > .jfc-music-playlist-actions {
+    margin-block-start: 10px;
+}
+
+.jfc-music-playlist-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    color: var(--jfc-bright);
+    background: linear-gradient(135deg, var(--jfc-crimson), var(--jfc-black));
+}
+
+.jfc-music-playlist-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.jfc-music-playlist-button,
+.jfc-music-playlist-search,
+.jfc-music-playlist-dialog input:not([type="checkbox"]) {
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 5px 10px;
+    border: 1px solid #ffffff35;
+    border-radius: 8px;
+    color: var(--jfc-white);
+    background: var(--jfc-panel);
+    font: inherit;
+}
+
+.jfc-music-playlist-button {
+    cursor: pointer;
+}
+
+.jfc-music-playlist-button:disabled {
+    opacity: .43;
+    cursor: default;
+}
+
+.jfc-music-playlist-primary {
+    border-color: var(--jfc-crimson);
+    background: var(--jfc-crimson);
+}
+
+.jfc-music-playlist-button:not(:disabled):is(:hover, :focus-visible) {
+    border-color: var(--jfc-bright);
+}
+
+.jfc-music-playlist-add {
+    flex: none;
+    align-self: center;
+    min-width: 0;
+    font-size: .82rem;
+}
+
+.jfc-music-playlist-audio-card {
+    flex: 0 0 clamp(118px, 11vw, 185px);
+    display: grid;
+    gap: 6px;
+}
+
+.jfc-music-playlist-audio-card > .jfc-music-card {
+    width: auto;
+    min-width: 0;
+}
+
+#musicPage .vertical-wrap > .card > .jfc-music-playlist-add {
+    margin: 4px 5% 8px;
+}
+
+.jfc-music-playlist-search {
+    width: min(100%, 360px);
+    margin-block-end: 14px;
+}
+
+.jfc-music-playlist-empty,
+.jfc-music-playlist-meta,
+.jfc-music-playlist-time,
+.jfc-music-playlist-sync {
+    color: var(--jfc-muted);
+    font-size: .88rem;
+}
+
+.jfc-music-playlist-sync {
+    margin-block-start: 8px;
+}
+
+.jfc-music-playlist-detail-heading {
+    display: grid;
+    grid-template-columns: clamp(58px, 13vw, 140px) minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    margin: 14px 0 18px;
+}
+
+.jfc-music-playlist-detail-heading p {
+    margin-block: 5px;
+}
+
+.jfc-music-playlist-tracks {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.jfc-music-playlist-row {
+    display: grid;
+    grid-template-columns: 3ch 44px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 6px;
+    border-bottom: 1px solid #fff2;
+}
+
+.jfc-music-playlist-row:has(.jfc-music-playlist-grip) {
+    grid-template-columns: 1.1em 3ch 44px minmax(0, 1fr) auto auto;
+}
+
+.jfc-music-playlist-grip {
+    color: var(--jfc-muted);
+    cursor: grab;
+}
+
+.jfc-music-playlist-track-info {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.jfc-music-playlist-track-title {
+    justify-self: start;
+    padding: 0;
+    border-color: transparent;
+    text-align: start;
+    background: none;
+    overflow-wrap: anywhere;
+}
+
+.jfc-music-playlist-dialog {
+    box-sizing: border-box;
+    width: min(480px, calc(100vw - 28px));
+    max-height: 88dvh;
+    padding: clamp(16px, 4vw, 28px);
+    overflow-y: auto;
+    border: 1px solid var(--jfc-crimson);
+    border-radius: var(--jfc-radius);
+    color: var(--jfc-white);
+    background: linear-gradient(145deg, #321019, var(--jfc-panel) 56%);
+}
+
+.jfc-music-playlist-dialog::backdrop {
+    background: #000b;
+}
+
+.jfc-music-playlist-dialog form,
+.jfc-music-playlist-dialog label {
+    display: grid;
+    gap: 10px;
+}
+
+.jfc-music-playlist-dialog :is(h2, p) {
+    margin: 0;
+}
+
+.jfc-music-playlist-choices {
+    max-height: 30dvh;
+    overflow: auto;
+    border: 1px solid #fff3;
+    border-radius: 8px;
+}
+
+.jfc-music-playlist-choices label {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    min-height: 40px;
+    overflow-wrap: anywhere;
+}
+
+.jfc-music-playlist-error {
+    color: var(--jfc-bright);
+}
+
+.jfc-music-playlist-error:empty {
+    display: none;
+}
+
+.jfc-music-playlist-notice {
+    position: fixed;
+    z-index: 4000;
+    inset-inline: auto 12px;
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+    padding: 10px 14px;
+    border: 1px solid var(--jfc-crimson);
+    border-radius: 10px;
+    color: var(--jfc-white);
+    background: var(--jfc-panel);
+}
+
+@media (max-width: 42em) {
+    .jfc-music-playlist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 142px), 1fr));
+    }
+
+    .jfc-music-playlist-button {
+        min-height: 44px;
+    }
+
+    .jfc-music-playlist-row,
+    .jfc-music-playlist-row:has(.jfc-music-playlist-grip) {
+        grid-template-columns: 2.5ch 38px minmax(0, 1fr) auto;
+        gap: 4px 8px;
+    }
+
+    .jfc-music-playlist-row .jfc-music-playlist-grip {
+        display: none;
+    }
+
+    .jfc-music-playlist-row .jfc-music-playlist-actions {
+        grid-column: 2 / -1;
+    }
+
+    :is(#musicPage, #itemDetailPage) .listItem:has(> .jfc-music-playlist-add) {
+        flex-wrap: wrap;
+        row-gap: 4px;
+    }
+}
+
 /* Shared library browsing, artwork, details and transport. */
 :is(#moviesPage, #tvshowsPage, #tvRecommendedPage, #musicPage, #musicRecommendedPage) .cardImageContainer {
     box-shadow: inset 0 0 0 1px #fff2, 0 5px 19px #0008;

@@ -1,5 +1,14 @@
 # Changelog
 
+## Movies & Shows
+
+- Combined the video libraries in one Modern navigation tab and Home tile, with featured artwork, separate category filters, and rows for recent titles and unfinished playback.
+
+## Music Playlists
+
+- Added an independent Music Playlists view and shelf with audio-only track management, ordered playback, and shuffle through Jellyfin's native queue.
+- Added per-user Display Preferences synchronization, browser fallback, and conflict handling.
+
 ## Home artwork
 
 - Extended the Home landscape behind the library tiles and kept the full height of the artwork visible.

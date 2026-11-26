@@ -246,6 +246,7 @@
     function musicRoute(index, target) {
         const params = new URLSearchParams(location.hash.split('?')[1]);
         params.set('tab', index);
+        params.delete('playlist');
         if (target) params.set('jfc', target);
         else params.delete('jfc');
         return '#/music?' + params.toString();
@@ -354,6 +355,890 @@
         return card;
     }
 
+    const MUSIC_PLAYLIST_PREF_ID = 'jfc-music-playlists';
+    const MUSIC_PLAYLIST_CLIENT = 'jellyfin-cinematic';
+    const MUSIC_PLAYLIST_PREF_KEY = 'playlistsJson';
+    const playlistNameLimit = 100;
+    const playlistIdPattern = /^[\w-]{1,100}$/;
+    const trackIdPattern = /^(?:[a-f\d]{32}|[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12})$/i;
+    const sameData = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const isTrack = item => item?.Type === 'Audio' && !item.IsFolder && trackIdPattern.test(item.Id);
+    let playlistStore;
+    let playlistView;
+    let playlistDialog;
+
+    function playlistId() {
+        return crypto.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint8Array(16)),
+            byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function readPlaylists(raw) {
+        if (raw === undefined) return [];
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data?.playlists)) throw new Error('Invalid playlist data');
+        const ids = new Set();
+        return data.playlists.map(({ id, name, createdAt, trackIds }) => {
+            if (typeof id !== 'string' || !playlistIdPattern.test(id) || ids.has(id) ||
+                typeof name !== 'string' || !name.trim() || name.trim().length > playlistNameLimit ||
+                !Number.isSafeInteger(createdAt) || createdAt < 0 || createdAt > 8.64e15 ||
+                !Array.isArray(trackIds) || trackIds.some(track => typeof track !== 'string' || !trackIdPattern.test(track))) {
+                throw new Error('Invalid playlist record');
+            }
+            ids.add(id);
+            return { id, name: name.trim(), createdAt, trackIds: [...new Set(trackIds)] };
+        });
+    }
+
+    function validatePlaylistChanges(changes) {
+        if (!Array.isArray(changes)) throw new Error('Invalid playlist journal');
+        const validName = name => typeof name === 'string' && !!name.trim() && name.length <= playlistNameLimit;
+        const validTracks = ids => Array.isArray(ids) && ids.every(id => typeof id === 'string' && trackIdPattern.test(id));
+        return changes.map(change => {
+            const { type, id, before, value } = change;
+            if (typeof id !== 'string' || !playlistIdPattern.test(id)) throw new Error('Invalid playlist ID');
+            if (type === 'create' || type === 'delete') {
+                const snapshot = readPlaylists(JSON.stringify({ playlists: [type === 'create' ? value : before] }))[0];
+                if (snapshot.id === id) return type === 'create' ? { type, id, value: snapshot } : { type, id, before: snapshot };
+            }
+            if (type === 'name' && validName(before) && validName(value)) return { type, id, before, value };
+            if (type === 'order' && validTracks(before) && validTracks(value) &&
+                before.length === value.length && new Set(value).size === value.length) {
+                const original = new Set(before);
+                if (value.every(track => original.has(track))) return { type, id, before, value };
+            }
+            if ((type === 'add' || type === 'remove') && typeof value === 'string' && trackIdPattern.test(value)) return { type, id, value };
+            throw new Error('Invalid playlist change');
+        });
+    }
+
+    function applyPlaylistChange(playlists, { type, id, before, value }) {
+        const current = playlists.find(item => item.id === id);
+        if (type === 'create') {
+            if (!current) return [...playlists, value];
+            if (sameData(current, value)) return playlists;
+        } else if (type === 'delete') {
+            if (!current || sameData(current, before)) return playlists.filter(item => item.id !== id);
+        } else if (current) {
+            let next;
+            if (type === 'add') next = { ...current, trackIds: [...new Set([...current.trackIds, value])] };
+            if (type === 'remove') next = { ...current, trackIds: current.trackIds.filter(track => track !== value) };
+            if (type === 'name' && (current.name === before || current.name === value)) next = { ...current, name: value };
+            if (type === 'order' && (sameData(current.trackIds, before) || sameData(current.trackIds, value))) {
+                next = { ...current, trackIds: value };
+            }
+            if (next) return playlists.map(item => item === current ? next : item);
+        }
+        throw new Error('Playlist changed on another device');
+    }
+
+    function withRequestTimeout(request) {
+        let timeout;
+        return Promise.race([
+            Promise.resolve().then(request),
+            new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Request timed out')), 10000); })
+        ]).finally(() => clearTimeout(timeout));
+    }
+
+    function openPlaylistStore(client, userId, serverId) {
+        const key = ['jfc-music-playlists', serverId, userId].map(encodeURIComponent).join(':');
+        const journal = key + ':pending';
+        const enabled = () => window.ApiClient === client && client.getCurrentUserId() === userId && client.serverId() === serverId;
+        let pending = [];
+        let attempt = null;
+        let running = null;
+        let browserWritable = true;
+        let lastServer;
+        const store = {
+            client, userId, serverId, enabled, playlists: [], ready: false, status: '', metadata: new Map(),
+            refresh() { return running || start(); },
+            mutate(changes) {
+                if (!store.ready || !enabled()) return false;
+                const next = changes.reduce(applyPlaylistChange, store.playlists);
+                if (sameData(next, store.playlists)) return false;
+                store.playlists = next;
+                pending.push(...changes);
+                saveLocal();
+                store.status = browserWritable ? 'Saved on this browser. Syncing…' : 'Syncing…';
+                updatePlaylistUI(store);
+                store.refresh();
+                return true;
+            },
+            useServerCopy() {
+                if (!lastServer || running || !enabled()) return;
+                pending = [];
+                attempt = null;
+                store.playlists = lastServer;
+                saveLocal();
+                store.status = 'Synced with Jellyfin';
+                store.conflict = false;
+                updatePlaylistUI(store);
+            }
+        };
+
+        try {
+            const raw = localStorage.getItem(key);
+            store.playlists = readPlaylists(raw ?? undefined);
+            const saved = JSON.parse(localStorage.getItem(journal) || 'null');
+            if (saved) {
+                const changes = validatePlaylistChanges(saved.pending);
+                const records = readPlaylists(JSON.stringify(saved.snapshot));
+                if (saved.attempt) {
+                    const { count, playlists } = saved.attempt;
+                    if (!Number.isSafeInteger(count) || count < 1 || count > changes.length) throw new Error('Invalid playlist journal');
+                    attempt = { count, playlists: readPlaylists(JSON.stringify({ playlists })) };
+                }
+                pending = changes;
+                if (saved.snapshot) store.playlists = records;
+            }
+        } catch {
+            // Leave unreadable browser data intact.
+            browserWritable = false;
+        }
+
+        function saveLocal() {
+            if (!browserWritable) return;
+            try {
+                const snapshot = { playlists: store.playlists };
+                if (pending.length) localStorage.setItem(journal, JSON.stringify({ pending, attempt, snapshot }));
+                localStorage.setItem(key, JSON.stringify(snapshot));
+                if (!pending.length) localStorage.removeItem(journal);
+            } catch {
+                browserWritable = false;
+            }
+        }
+
+        async function sync() {
+            while (enabled()) {
+                let preferences;
+                let remote;
+                try {
+                    preferences = await withRequestTimeout(() => client.getDisplayPreferences(MUSIC_PLAYLIST_PREF_ID, userId, MUSIC_PLAYLIST_CLIENT));
+                    if (!preferences || typeof preferences !== 'object') throw new Error('Missing preferences');
+                    remote = readPlaylists(preferences.CustomPrefs?.[MUSIC_PLAYLIST_PREF_KEY]);
+                } catch {
+                    store.status = browserWritable ? 'Saved on this browser only. Jellyfin sync unavailable.' :
+                        'Jellyfin sync and browser storage unavailable. Changes are kept for this session.';
+                    return;
+                }
+                if (!enabled()) return;
+                lastServer = remote;
+                if (attempt && sameData(attempt.playlists, remote)) pending.splice(0, attempt.count);
+                attempt = null;
+                const changes = pending.slice();
+                let next;
+                try {
+                    next = changes.reduce(applyPlaylistChange, remote);
+                } catch {
+                    store.conflict = true;
+                    store.status = 'Playlist changes conflict with Jellyfin. Your local copy has been kept.';
+                    return;
+                }
+                store.conflict = false;
+                if (sameData(remote, next)) {
+                    pending.splice(0, changes.length);
+                    if (!sameData(store.playlists, remote)) store.playlists = remote;
+                    saveLocal();
+                    store.status = 'Synced with Jellyfin';
+                    return;
+                }
+
+                attempt = { count: changes.length, playlists: next };
+                saveLocal();
+                const waitNotice = setTimeout(() => {
+                    if (!enabled()) return;
+                    store.status = browserWritable ? 'Saved on this browser. Jellyfin sync is taking longer than expected.' :
+                        'Jellyfin sync is taking longer than expected.';
+                    updatePlaylistUI(store);
+                }, 10000);
+                try {
+                    await client.updateDisplayPreferences(MUSIC_PLAYLIST_PREF_ID, {
+                        ...preferences,
+                        CustomPrefs: { ...preferences.CustomPrefs, [MUSIC_PLAYLIST_PREF_KEY]: JSON.stringify({ playlists: next }) }
+                    }, userId, MUSIC_PLAYLIST_CLIENT);
+                } catch {
+                    store.status = browserWritable ? 'Saved on this browser only. Jellyfin sync unavailable.' :
+                        'Changes are kept for this session. Jellyfin sync and browser storage unavailable.';
+                    return;
+                } finally {
+                    clearTimeout(waitNotice);
+                }
+                pending.splice(0, changes.length);
+                attempt = null;
+                lastServer = next;
+                try {
+                    const merged = pending.reduce(applyPlaylistChange, next);
+                    if (!sameData(store.playlists, merged)) store.playlists = merged;
+                } catch {
+                    store.conflict = true;
+                    store.status = 'Playlist changes conflict with Jellyfin. Your local copy has been kept.';
+                    saveLocal();
+                    return;
+                }
+                saveLocal();
+                if (!pending.length) {
+                    store.status = 'Synced with Jellyfin';
+                    return;
+                }
+            }
+        }
+
+        function start() {
+            running = sync().catch(() => {
+                store.status = 'Music playlists could not be synchronized.';
+            }).finally(() => {
+                running = null;
+                store.ready = true;
+                updatePlaylistUI(store);
+                if (pending.length && enabled() && (!playlistView || playlistView.shell.hidden)) playlistFeedback(store.status);
+            });
+            return running;
+        }
+
+        store.refresh();
+        return store;
+    }
+
+    function currentPlaylistStore() {
+        const client = window.ApiClient;
+        const userId = client?.getCurrentUserId?.();
+        const serverId = client?.serverId?.();
+        if (playlistStore && !playlistStore.enabled()) playlistStore = undefined;
+        if (!userId || !serverId) return null;
+        if (!playlistStore) playlistStore = openPlaylistStore(client, userId, serverId);
+        return playlistStore;
+    }
+
+    async function playlistTracks(store, ids) {
+        const cache = store.metadata;
+        const now = Date.now();
+        const missing = [...new Set(ids)].filter(id => !(cache.get(id)?.expires > now));
+        for (let i = 0; i < missing.length; i += 100) {
+            const batch = missing.slice(i, i + 100);
+            const result = withRequestTimeout(() => store.client.getItems(store.userId, {
+                Ids: batch.join(','), IncludeItemTypes: 'Audio', Fields: 'PrimaryImageAspectRatio',
+                EnableTotalRecordCount: false
+            })).then(response => {
+                if (!Array.isArray(response?.Items)) throw new Error('Missing Items');
+                return new Map(response.Items.filter(isTrack).map(item => [item.Id, item]));
+            });
+            for (const id of batch) {
+                const entry = { expires: now + 120000, item: result.then(items => items.get(id) || null) };
+                cache.set(id, entry);
+                entry.item.catch(() => { if (cache.get(id) === entry) cache.delete(id); });
+            }
+        }
+        const items = await Promise.all(ids.map(id => cache.get(id)?.item || null));
+        return new Map(ids.map((id, index) => [id, items[index]]));
+    }
+
+    function playlistHref(id) {
+        const hash = musicRoute(5, 'music-playlists');
+        return id ? hash + '&playlist=' + encodeURIComponent(id) : hash;
+    }
+
+    function playlistControl(label, action, key) {
+        const button = make('button', 'jfc-music-playlist-button', label);
+        button.type = 'button';
+        if (key) button.dataset.focus = key;
+        button.addEventListener('click', action);
+        return button;
+    }
+
+    function playlistLink(label, id) {
+        const link = make('a', 'jfc-music-playlist-link', label);
+        link.href = playlistHref(id);
+        return link;
+    }
+
+    function playlistImage(client, item, size) {
+        const art = make('span', 'jfc-music-playlist-art');
+        art.append(icon('music_note'));
+        const tag = item?.ImageTags?.Primary;
+        const albumTag = item?.AlbumPrimaryImageTag;
+        const id = tag ? item.Id : albumTag && item.AlbumId;
+        if (id) {
+            const img = make('img');
+            img.alt = '';
+            img.loading = 'lazy';
+            img.addEventListener('error', () => img.remove(), { once: true });
+            img.src = client.getScaledImageUrl(id, { type: 'Primary', tag: tag || albumTag, fillWidth: size, fillHeight: size });
+            art.append(img);
+        }
+        return art;
+    }
+
+    function playlistCover(store, ids) {
+        const cover = playlistImage(store.client);
+        if (ids.length) playlistTracks(store, ids.slice(0, 4)).then(items => {
+            const images = [...items.values()].map(item => playlistImage(store.client, item, 224).querySelector('img')).filter(Boolean);
+            if (images.length && cover.isConnected && store.enabled()) cover.append(images[0]);
+        }).catch(() => {});
+        return cover;
+    }
+
+    function duration(ticks) {
+        const seconds = Math.floor(Math.max(0, ticks || 0) / 10000000);
+        const time = [Math.floor(seconds / 60) % 60, seconds % 60];
+        if (seconds >= 3600) time.unshift(Math.floor(seconds / 3600));
+        return time.map((part, index) => index ? String(part).padStart(2, '0') : part).join(':');
+    }
+
+    const trackCount = count => count + (count === 1 ? ' track' : ' tracks');
+
+    function playlistSummary(record, items) {
+        const ticks = [...items.values()].reduce((sum, item) => sum + (item?.RunTimeTicks || 0), 0);
+        return trackCount(record.trackIds.length) + (ticks ? ' · ' + duration(ticks) : '');
+    }
+
+    function closePlaylistDialog() {
+        if (!playlistDialog) return;
+        playlistDialog.close();
+        playlistDialog.remove();
+        playlistDialog = null;
+    }
+
+    function playlistForm(store, title, confirmLabel, build, submit) {
+        if (!store?.enabled() || !store.ready || playlistDialog) return;
+        const opener = document.activeElement;
+        const dialog = make('dialog', 'jfc-music-playlist-dialog');
+        const form = make('form');
+        const heading = make('h2', '', title);
+        heading.id = 'jfc-music-playlist-dialog-title';
+        dialog.setAttribute('aria-labelledby', heading.id);
+        const error = make('p', 'jfc-music-playlist-error');
+        error.setAttribute('role', 'alert');
+        const controls = make('div', 'jfc-music-playlist-actions');
+        const confirm = make('button', 'jfc-music-playlist-button jfc-music-playlist-primary', confirmLabel);
+        confirm.type = 'submit';
+        controls.append(playlistControl('Cancel', closePlaylistDialog), confirm);
+        build(form);
+        form.prepend(heading);
+        form.append(error, controls);
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            if (!store.enabled() || dialog !== playlistDialog) return closePlaylistDialog();
+            confirm.disabled = true;
+            try {
+                const onClose = submit();
+                closePlaylistDialog();
+                if (typeof onClose === 'function') onClose();
+            } catch (err) {
+                error.textContent = err.message;
+                confirm.disabled = false;
+            }
+        });
+        dialog.addEventListener('cancel', event => {
+            event.preventDefault();
+            closePlaylistDialog();
+        });
+        dialog.addEventListener('close', () => {
+            if (opener?.isConnected) opener.focus();
+            else playlistView?.panel.querySelector('h2')?.focus();
+        });
+        dialog.append(form);
+        document.body.append(dialog);
+        playlistDialog = dialog;
+        dialog.showModal();
+    }
+
+    function playlistNameInput(form, initial = '') {
+        const label = make('label', '', 'Playlist name');
+        const field = make('input');
+        field.type = 'text';
+        field.maxLength = playlistNameLimit;
+        field.value = initial;
+        label.append(field);
+        form.append(label);
+        return field;
+    }
+
+    function newPlaylist(store, name, trackIds = []) {
+        if (!name) throw new Error('Enter a playlist name.');
+        let id;
+        do { id = playlistId(); } while (store.playlists.some(item => item.id === id));
+        return { type: 'create', id, value: { id, name, createdAt: Date.now(), trackIds } };
+    }
+
+    function editPlaylistName(store, record) {
+        let field;
+        playlistForm(store, record ? 'Rename playlist' : 'Create Playlist', record ? 'Save name' : 'Create Playlist', form => {
+            field = playlistNameInput(form, record?.name);
+            field.autofocus = true;
+        }, () => {
+            const name = field.value.trim();
+            if (!name) throw new Error('Enter a playlist name.');
+            const operation = record ? { type: 'name', id: record.id, before: record.name, value: name } : newPlaylist(store, name);
+            store.mutate([operation]);
+            if (!record) return () => { location.hash = playlistHref(operation.id); };
+        });
+    }
+
+    function confirmPlaylistDelete(store, record) {
+        playlistForm(store, 'Delete playlist?', 'Delete playlist', form => {
+            form.append(make('p', '', 'Remove “' + record.name + '” from Music Playlists?'));
+        }, () => { store.mutate([{ type: 'delete', id: record.id, before: record }]); });
+    }
+
+    function addToMusicPlaylist(store, id) {
+        if (!store?.enabled() || !store.ready || playlistDialog) return;
+        const route = location.hash;
+        const scope = playlistTrackScope();
+        playlistTracks(store, [id]).then(items => {
+            if (store !== playlistStore || !store.enabled() || location.hash !== route || playlistTrackScope() !== scope) return;
+            const item = items.get(id);
+            if (!item) return playlistFeedback('This audio track is unavailable.');
+            let field;
+            let choices;
+            playlistForm(store, 'Add to Music Playlists', 'Add track', form => {
+                form.append(make('p', '', item.Name || 'Audio track'));
+                const group = make('fieldset', 'jfc-music-playlist-choices');
+                group.append(make('legend', '', 'Choose playlists'));
+                choices = store.playlists.map(record => {
+                    const label = make('label');
+                    const box = make('input');
+                    box.type = 'checkbox';
+                    box.disabled = record.trackIds.includes(id);
+                    box.checked = box.disabled;
+                    label.append(box, make('span', '', record.name + (box.disabled ? ' · Already added' : '')));
+                    group.append(label);
+                    return [record.id, box];
+                });
+                if (choices.length) form.append(group);
+                field = playlistNameInput(form);
+                field.placeholder = 'Or create a new playlist';
+                if (!choices.length) field.autofocus = true;
+            }, () => {
+                const changes = choices.filter(([, box]) => box.checked && !box.disabled).map(([playlist]) =>
+                    ({ type: 'add', id: playlist, value: id }));
+                if (field.value.trim()) changes.push(newPlaylist(store, field.value.trim(), [id]));
+                if (!changes.length) throw new Error('Select a playlist or enter a new playlist name.');
+                if (!store.mutate(changes)) throw new Error('That track is already in the selected playlists.');
+                return () => playlistFeedback('Track added to Music Playlists.');
+            });
+        }).catch(() => {
+            if (store.enabled() && location.hash === route) playlistFeedback('Could not load this audio track.');
+        });
+    }
+
+    let playbackRequest = 0;
+    async function startPlaylist(store, record, shuffle, selected) {
+        if (!record.trackIds.length) return playlistFeedback('Add a track before playing this playlist.');
+        const request = ++playbackRequest;
+        try {
+            const tracks = await playlistTracks(store, record.trackIds);
+            if (request !== playbackRequest || !store.enabled() || playlistView?.store !== store) return;
+            const ids = record.trackIds.filter(id => tracks.get(id));
+            if (!ids.length || selected && !ids.includes(selected)) return playlistFeedback('No playable track is available.');
+            if (shuffle) {
+                for (let i = ids.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [ids[i], ids[j]] = [ids[j], ids[i]];
+                }
+            }
+            // Jellyfin Web 12.4's ItemsContainer handles playallfromhere through its native playback manager.
+            const native = music?.page.querySelector(':scope > .padded-bottom-page .itemsContainer');
+            if (!native || native.fetchData) return playlistFeedback('Jellyfin playback is unavailable on this view.');
+            const group = make('div', 'itemsContainer');
+            group.hidden = true;
+            // The native fetchData branch queues the complete ordered result without the default 300-ID limit.
+            group.fetchData = async () => ({ Items: ids.map(id => ({ ...tracks.get(id), ServerId: store.serverId })) });
+            const entries = ids.map(id => {
+                const item = make('div', 'jfc-music-playlist-playback itemAction');
+                Object.assign(item.dataset, { id, type: 'Audio', mediatype: 'Audio', serverid: store.serverId, action: 'playallfromhere' });
+                return item;
+            });
+            group.append(...entries);
+            native.append(group);
+            try {
+                const start = entries[selected ? ids.indexOf(selected) : 0];
+                if (start.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))) {
+                    playlistFeedback('This Jellyfin client did not accept the playback request.');
+                }
+            } finally {
+                group.remove();
+            }
+        } catch {
+            playlistFeedback('Could not prepare the playlist for playback.');
+        }
+    }
+
+    let playlistNotice;
+    let playlistNoticeTimer;
+    function playlistFeedback(message) {
+        if (!playlistTrackScope() || !playlistStore?.enabled()) return;
+        if (!playlistNotice?.isConnected) {
+            playlistNotice = make('div', 'jfc-music-playlist-notice');
+            playlistNotice.setAttribute('role', 'status');
+            document.body.append(playlistNotice);
+        }
+        playlistNotice.textContent = message;
+        clearTimeout(playlistNoticeTimer);
+        playlistNoticeTimer = setTimeout(() => playlistNotice?.remove(), 3500);
+    }
+
+    function playlistActions(store, record, key) {
+        const actions = make('div', 'jfc-music-playlist-actions');
+        for (const [label, action] of [
+            ['Play', () => startPlaylist(store, record, false)],
+            ['Shuffle', () => startPlaylist(store, record, true)],
+            ['Rename', () => editPlaylistName(store, record)],
+            ['Delete', () => confirmPlaylistDelete(store, record)]
+        ]) {
+            const button = playlistControl(label, action, key + label);
+            button.setAttribute('aria-label', label + ' ' + record.name);
+            actions.append(button);
+        }
+        actions.firstChild.classList.add('jfc-music-playlist-primary');
+        return actions;
+    }
+
+    function playlistCard(view, record, manage) {
+        const { store } = view;
+        const card = make('article', 'jfc-music-playlist-card');
+        const link = playlistLink(record.name, record.id);
+        link.dataset.focus = record.id;
+        const summary = make('span', 'jfc-music-playlist-meta', trackCount(record.trackIds.length));
+        link.prepend(playlistCover(store, record.trackIds));
+        link.append(summary);
+        card.append(link);
+        if (manage) {
+            card.append(playlistActions(store, record, record.id));
+            if (record.trackIds.length) playlistTracks(store, record.trackIds).then(items => {
+                if (summary.isConnected && store.enabled()) summary.textContent = playlistSummary(record, items);
+            }).catch(() => {});
+        }
+        return card;
+    }
+
+    function populatePlaylistCards(view, target, records, manage) {
+        const grid = make('div', 'jfc-music-playlist-grid');
+        if (!records.length) {
+            target.replaceChildren(make('p', 'jfc-music-playlist-empty',
+                records === view.store.playlists || !view.query ? 'No music playlists yet.' : 'No matching playlists.'));
+            return;
+        }
+        target.replaceChildren(grid);
+        let rendered = 0;
+        const next = playlistControl('Show more playlists', showMore);
+        function showMore() {
+            const end = Math.min(rendered + (manage ? 24 : 12), records.length);
+            grid.append(...records.slice(rendered, end).map(record => playlistCard(view, record, manage)));
+            rendered = end;
+            if (rendered >= records.length) next.remove();
+        }
+        target.append(next);
+        showMore();
+    }
+
+    function setPlaylistOrder(store, record, from, to) {
+        if (from === to || to < 0 || to >= record.trackIds.length) return;
+        const order = record.trackIds.slice();
+        order.splice(to, 0, ...order.splice(from, 1));
+        try {
+            store.mutate([{ type: 'order', id: record.id, before: record.trackIds, value: order }]);
+        } catch {
+            playlistFeedback('This playlist changed. Try reordering again.');
+        }
+    }
+
+    function playlistTrackRow(view, record, track, index) {
+        const { store } = view;
+        const id = record.trackIds[index];
+        const row = make('li', 'jfc-music-playlist-row');
+        const title = track?.Name || 'Unavailable track';
+        row.append(make('span', 'jfc-music-playlist-number', index + 1), playlistImage(store.client, track, 96));
+        const copy = make('div', 'jfc-music-playlist-track-info');
+        if (track) {
+            const play = playlistControl(title, () => startPlaylist(store, record, false, id), id + 'play');
+            play.classList.add('jfc-music-playlist-track-title');
+            play.setAttribute('aria-label', 'Play ' + title);
+            copy.append(play);
+            copy.append(make('span', 'jfc-music-playlist-meta', [track.Artists?.join(', '), track.Album].filter(Boolean).join(' · ')));
+        } else {
+            copy.append(make('strong', '', title), make('span', 'jfc-music-playlist-meta', 'This song could not be found.'));
+        }
+        row.append(copy, make('span', 'jfc-music-playlist-time', track?.RunTimeTicks ? duration(track.RunTimeTicks) : '—'));
+
+        const actions = make('div', 'jfc-music-playlist-actions');
+        for (const [label, arrow, step] of [['Move up', '↑', -1], ['Move down', '↓', 1]]) {
+            const move = playlistControl(arrow, () => setPlaylistOrder(store, record, index, index + step), id + label);
+            move.title = label;
+            move.setAttribute('aria-label', label + ' ' + title);
+            move.disabled = index + step < 0 || index + step >= record.trackIds.length;
+            actions.append(move);
+        }
+        const remove = playlistControl('Remove', () => {
+            store.mutate([{ type: 'remove', id: record.id, value: id }]);
+            playlistFeedback('Track removed from ' + record.name + '.');
+        }, id + 'remove');
+        remove.setAttribute('aria-label', 'Remove ' + title);
+        actions.append(remove);
+        row.append(actions);
+
+        if (matchMedia('(pointer: fine)').matches) {
+            const handle = make('span', 'jfc-music-playlist-grip', '⠿');
+            handle.draggable = true;
+            handle.setAttribute('aria-hidden', 'true');
+            handle.title = 'Drag to reorder';
+            handle.addEventListener('dragstart', event => {
+                view.dragged = { record, index };
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', title);
+            });
+            handle.addEventListener('dragend', () => { view.dragged = null; });
+            row.addEventListener('dragover', event => {
+                if (view.dragged?.record === record) event.preventDefault();
+            });
+            row.addEventListener('drop', event => {
+                if (view.dragged?.record !== record) return;
+                event.preventDefault();
+                setPlaylistOrder(store, record, view.dragged.index, index);
+                view.dragged = null;
+            });
+            row.prepend(handle);
+        }
+        return row;
+    }
+
+    function renderPlaylistDetail(view, record, target) {
+        const { store } = view;
+        const back = playlistLink('← Music Playlists');
+        back.dataset.focus = 'back';
+        const header = make('header', 'jfc-music-playlist-detail-heading');
+        const text = make('div');
+        const title = make('h2', '', record.name);
+        title.tabIndex = -1;
+        const summary = make('p', 'jfc-music-playlist-meta', trackCount(record.trackIds.length));
+        const created = make('p', 'jfc-music-playlist-meta', 'Created ' + new Date(record.createdAt).toLocaleDateString());
+        text.append(title, summary, created, playlistActions(store, record, 'detail'));
+        header.append(playlistCover(store, record.trackIds), text);
+        const listing = make('div');
+        target.append(back, header, listing);
+        if (!record.trackIds.length) {
+            const songs = playlistLink('Browse All Songs');
+            songs.href = musicRoute(5);
+            listing.append(make('p', 'jfc-music-playlist-empty', 'Add songs from All Songs, an album, or Recently Played.'), songs);
+            return;
+        }
+        const loading = make('p', 'jfc-music-playlist-meta', 'Loading tracks…');
+        listing.append(loading);
+        playlistTracks(store, record.trackIds).then(items => {
+            if (playlistView !== view || !store.enabled() || !listing.isConnected) return;
+            summary.textContent = playlistSummary(record, items);
+            const list = make('ol', 'jfc-music-playlist-tracks');
+            listing.replaceChildren(list);
+            let runtimeRows = 0;
+            const more = playlistControl('Show more tracks', renderRows);
+            function renderRows() {
+                const until = Math.min(record.trackIds.length, Math.max(runtimeRows + 60, view.trackLimit));
+                list.append(...record.trackIds.slice(runtimeRows, until).map((id, index) =>
+                    playlistTrackRow(view, record, items.get(id), runtimeRows + index)));
+                runtimeRows = until;
+                view.trackLimit = runtimeRows;
+                if (until >= record.trackIds.length) more.remove();
+            }
+            listing.append(more);
+            renderRows();
+            if (view.restoreFocus && document.activeElement === document.body) {
+                const previous = list.querySelector('[data-focus="' + CSS.escape(view.restoreFocus) + '"]');
+                const focus = previous?.disabled ? previous.closest('li').querySelector('button:not(:disabled)') : previous;
+                focus?.focus({ preventScroll: true });
+            }
+        }).catch(() => {
+            if (listing.isConnected) {
+                loading.textContent = 'Could not load tracks.';
+                listing.append(playlistControl('Retry', () => {
+                    target.replaceChildren();
+                    renderPlaylistDetail(view, record, target);
+                }));
+            }
+        });
+    }
+
+    function updatePlaylistUI(store) {
+        const view = playlistView;
+        if (!view || view.store !== store || !store.enabled()) return;
+        view.message.textContent = store.status;
+        view.retry.hidden = !store.status.includes('browser only') && !store.status.includes('unavailable') && !store.conflict;
+        view.discard.hidden = !store.conflict;
+        const previous = view.rendered;
+        if (previous?.records === store.playlists && previous.ready === store.ready && previous.id === view.id && previous.active === view.active) return;
+        view.rendered = { records: store.playlists, ready: store.ready, id: view.id, active: view.active };
+        if (view.shelfReady !== store.ready || previous?.records !== store.playlists) {
+            view.shelfReady = store.ready;
+            view.shelfCreate.disabled = !store.ready;
+            if (store.ready) populatePlaylistCards(view, view.shelfBody, store.playlists, false);
+        }
+        if (!view.active) return;
+        const focused = document.activeElement;
+        view.restoreFocus = focused?.dataset.focus || '';
+        if (previous?.id !== view.id) view.trackLimit = 0;
+        const target = view.content;
+        target.replaceChildren();
+        if (!store.ready) {
+            target.append(make('p', '', 'Loading Music Playlists…'));
+            return;
+        }
+        const record = store.playlists.find(item => item.id === view.id);
+        if (record) {
+            renderPlaylistDetail(view, record, target);
+        } else {
+            const header = make('header', 'jfc-music-playlist-heading');
+            const title = make('h2', '', 'Music Playlists');
+            title.tabIndex = -1;
+            header.append(title, playlistControl('Create Playlist', () => editPlaylistName(store), 'create'));
+            const field = make('input', 'jfc-music-playlist-search');
+            field.type = 'search';
+            field.placeholder = 'Search playlists';
+            field.setAttribute('aria-label', 'Search playlists');
+            field.value = view.query;
+            field.dataset.focus = 'search';
+            const cards = make('div');
+            function filter() {
+                const query = view.query.trim().toLocaleLowerCase();
+                const records = query ? store.playlists.filter(item => item.name.toLocaleLowerCase().includes(query)) : store.playlists;
+                populatePlaylistCards(view, cards, records, true);
+            }
+            field.addEventListener('input', () => {
+                view.query = field.value;
+                filter();
+            });
+            target.append(header, field, cards);
+            filter();
+        }
+        if (view.restoreFocus) {
+            target.querySelector('[data-focus="' + CSS.escape(view.restoreFocus) + '"]')?.focus({ preventScroll: true });
+        } else if (previous && (previous.id !== view.id || !previous.active)) {
+            target.querySelector('h2')?.focus({ preventScroll: true });
+        }
+    }
+
+    function mountPlaylists(state, store) {
+        const shell = make('section', 'jfc-music-playlist-shell');
+        const shelf = make('section', 'jfc-music-playlist-shelf');
+        const header = make('header', 'jfc-music-playlist-heading');
+        const title = make('h2');
+        title.append(playlistLink('Music Playlists'));
+        const shelfCreate = playlistControl('Create Playlist', () => editPlaylistName(store));
+        const shelfBody = make('div');
+        header.append(title, shelfCreate);
+        shelf.append(header, shelfBody);
+        const panel = make('section', 'jfc-music-playlist-panel');
+        const content = make('div');
+        panel.append(content);
+        const sync = make('div', 'jfc-music-playlist-sync');
+        const message = make('span', '', 'Loading Music Playlists…');
+        message.setAttribute('role', 'status');
+        const retry = playlistControl('Retry sync', () => store.refresh());
+        const discard = playlistControl('Use server copy', () => {
+            playlistForm(store, 'Use server copy?', 'Use server copy', form => {
+                form.append(make('p', '', 'Discard the pending local changes and load the last server copy?'));
+            }, () => { store.useServerCopy(); });
+        });
+        sync.append(message, retry, discard);
+        shell.append(shelf, panel, sync);
+        state.played.section.after(shell);
+        shelfBody.append(make('p', 'jfc-music-playlist-empty', 'Loading Music Playlists…'));
+        const view = { store, shell, shelf, shelfCreate, shelfBody, panel, content, message, retry, discard, query: '', trackLimit: 0 };
+        playlistView = view;
+        store.refresh();
+        return view;
+    }
+
+    function unmountPlaylists() {
+        if (!playlistView) return;
+        closePlaylistDialog();
+        playbackRequest++;
+        playlistView.shell.remove();
+        playlistView = null;
+    }
+
+    function updatePlaylists(state, activeTab, target, params) {
+        const store = currentPlaylistStore();
+        if (!store) return;
+        const view = playlistView || mountPlaylists(state, store);
+        const active = target === 'music-playlists';
+        view.id = active && params.get('playlist');
+        view.active = active;
+        view.shell.hidden = !active && activeTab !== 0;
+        view.shelf.hidden = active;
+        view.panel.hidden = !active;
+        state.page.classList.toggle('jfc-music-playlist-active', active);
+        updatePlaylistUI(store);
+    }
+
+    function playlistTrackScope() {
+        const route = location.hash.split('?')[0];
+        if (route === '#/music' && music?.modern) return music.page;
+        if (route === '#/details') return document.querySelector('#itemDetailPage:not(.hide) #listChildrenCollapsible');
+        return null;
+    }
+
+    let trackActionScope;
+    let trackActionRoute;
+    let trackActionAccount;
+    let trackActionFrame;
+    let trackActionVerified = false;
+    const trackActionObserver = new MutationObserver(() => {
+        if (!trackActionFrame) trackActionFrame = requestAnimationFrame(renderTrackActions);
+    });
+
+    function trackActionButton(store, id) {
+        const button = playlistControl('+ Music Playlist', event => {
+            event.stopPropagation();
+            addToMusicPlaylist(store, id);
+        });
+        button.classList.add('jfc-music-playlist-add');
+        return button;
+    }
+
+    function renderTrackActions() {
+        trackActionFrame = 0;
+        const scope = trackActionScope;
+        const store = trackActionAccount;
+        if (!trackActionVerified || scope !== playlistTrackScope() || !store?.ready || !store.enabled()) return;
+        for (const row of scope.querySelectorAll(':is(.card, .listItem)[data-type="Audio"][data-id], [data-jfc-audio-id]')) {
+            const id = row.dataset.jfcAudioId || row.dataset.id;
+            if (!trackIdPattern.test(id) || row.dataset.isfolder === 'true' ||
+                row.dataset.serverid && row.dataset.serverid !== store.serverId ||
+                row.querySelector('.jfc-music-playlist-add')) continue;
+            row.append(trackActionButton(store, id));
+        }
+    }
+
+    function updateTrackActions(scope) {
+        const route = location.hash;
+        const store = scope ? currentPlaylistStore() : null;
+        if (playlistStore && !playlistStore.enabled()) playlistStore = undefined;
+        if (scope === trackActionScope && store === trackActionAccount && trackActionRoute === route) return;
+        playbackRequest++;
+        const nextPath = route.split('?')[0];
+        closePlaylistDialog();
+        playlistNotice?.remove();
+        clearTimeout(playlistNoticeTimer);
+        trackActionObserver.disconnect();
+        trackActionScope?.querySelectorAll('.jfc-music-playlist-add').forEach(button => button.remove());
+        trackActionScope = scope;
+        trackActionAccount = store;
+        trackActionRoute = route;
+        trackActionVerified = nextPath === '#/music';
+        if (!scope || !store) return;
+        trackActionObserver.observe(scope, { childList: true, subtree: true });
+        if (trackActionVerified) {
+            if (store.ready) renderTrackActions();
+            else store.refresh().then(renderTrackActions);
+        } else {
+            const id = new URLSearchParams(route.split('?')[1]).get('id');
+            if (!trackIdPattern.test(id)) return;
+            withRequestTimeout(() => store.client.getItem(store.userId, id)).then(item => {
+                if (location.hash !== route || trackActionScope !== scope || store !== trackActionAccount) return;
+                trackActionVerified = item?.Type === 'MusicAlbum';
+                if (store.ready) renderTrackActions();
+                else return store.refresh().then(renderTrackActions);
+            }).catch(() => {});
+        }
+    }
+
     function showShelfStatus(shelf, title, subtitle, iconName) {
         const status = make('div', 'jfc-music-empty');
         status.setAttribute('role', 'status');
@@ -394,7 +1279,15 @@
                         'Add music to your library to see ' + definition.noun + ' here.', definition.emptyIcon);
                 return;
             }
-            const cards = result.Items.map(item => makeMusicCard(item, client, definition)).filter(Boolean);
+            const cards = result.Items.flatMap(item => {
+                const card = makeMusicCard(item, client, definition);
+                if (!card) return [];
+                if (!state.modern || !isTrack(item)) return [card];
+                const wrapper = make('div', 'jfc-music-playlist-audio-card');
+                wrapper.dataset.jfcAudioId = item.Id;
+                wrapper.append(card);
+                return [wrapper];
+            });
             if (!cards.length) throw new Error('Missing item links');
             shelf.track.replaceChildren(...cards);
             shelf.body.replaceChildren(shelf.track);
@@ -434,7 +1327,7 @@
             const button = musicButton(modern ? 'a' : 'button', title, decoration);
             if (modern && target) button.classList.add('jfc-music-recent-link');
             if (modern) {
-                button.href = musicRoute(index, target);
+                button.href = index === 4 ? playlistHref() : musicRoute(index, target);
                 if (target) button.addEventListener('click', () => {
                     if (location.hash === button.getAttribute('href')) {
                         scrollToContent(document.getElementById(target === 'played' ? 'jfc-music-tracks' : 'jfc-music-albums'));
@@ -475,7 +1368,8 @@
 
     function clearMusic() {
         if (!music) return;
-        music.page.classList.remove('jfc-music-page', 'jfc-music-empty-library', 'jfc-music-albums-active', 'jfc-music-recent-albums');
+        unmountPlaylists();
+        music.page.classList.remove('jfc-music-page', 'jfc-music-empty-library', 'jfc-music-albums-active', 'jfc-music-recent-albums', 'jfc-music-playlist-active');
         music.nodes.forEach(node => node.remove());
         music = null;
         recentlyPlayedRequested = false;
@@ -483,24 +1377,32 @@
 
     function updateModernMusic(state) {
         const activeTab = currentMusicTab();
+        const params = new URLSearchParams(location.hash.split('?')[1]);
+        const target = params.get('jfc');
+        const playlistsActive = target === 'music-playlists';
         const phone = phoneMusicLayout.matches;
         const layout = phone ? 'phone' : 'modern';
         if (state.tabKey !== layout) {
             state.tabKey = layout;
             const order = phone ? phoneMusicOrder : modernMusicLabels.keys();
-            state.list.replaceChildren(...Array.from(order, index => {
+            const links = Array.from(order, index => {
                 const label = phone && index === 5 ? 'All Songs' : modernMusicLabels[index];
                 const link = musicButton('a', label, musicTabs[index][1]);
                 link.href = musicRoute(index);
                 link.dataset.tab = index;
                 return link;
-            }));
+            });
+            const playlists = musicButton('a', 'Music Playlists', 'queue_music');
+            playlists.href = playlistHref();
+            playlists.dataset.playlists = 'true';
+            const nextTo = links.findIndex(link => Number(link.dataset.tab) === 4);
+            links.splice(phone ? 1 : nextTo + 1, 0, playlists);
+            state.list.replaceChildren(...links);
         }
         for (const link of state.list.children) {
-            if (activeTab === Number(link.dataset.tab)) link.setAttribute('aria-current', 'page');
+            if (playlistsActive ? link.dataset.playlists : activeTab === Number(link.dataset.tab)) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         }
-        const target = new URLSearchParams(location.hash.split('?')[1]).get('jfc');
         state.content.hidden = activeTab !== 0;
         state.allPlaylists.hidden = activeTab !== 4;
         state.page.classList.toggle('jfc-music-albums-active', activeTab === 0);
@@ -516,6 +1418,7 @@
         }
         if (!state.content.hidden) state.shelves.forEach(shelf => shelf.updateArrows());
         if (!state.played.section.hidden) state.played.updateArrows();
+        updatePlaylists(state, activeTab, target, params);
         if (target !== state.target) {
             state.target = target;
             if (target === 'played' && !state.played.section.hidden) scrollToContent(state.played.section);
@@ -590,6 +1493,266 @@
         }
     }
 
+    const watchTypes = {
+        movies: { kind: 'Movie', label: 'Movies', route: '#/movies' },
+        tvshows: { kind: 'Series', label: 'Shows', route: '#/tv' }
+    };
+    let watchSession;
+    let watchView;
+    const watchNativeLinks = 'a:is([href^="#/movies?"], [href^="#/tv?"]):not([data-jfc-watch-entry])';
+
+    function watchLibraryHref(library) {
+        return watchTypes[library.CollectionType].route + '?' + new URLSearchParams({
+            topParentId: library.Id, collectionType: library.CollectionType
+        });
+    }
+
+    function watchHref(session, filter = 'all') {
+        const params = new URLSearchParams({ jfc: 'watch' });
+        if (filter !== 'all') params.set('filter', filter);
+        return watchLibraryHref(session.libraries[0]) + '&' + params;
+    }
+
+    function watchLink(session, label, filter, className) {
+        const link = make('a', className, label);
+        link.href = watchHref(session, filter);
+        return link;
+    }
+
+    function watchEntry(session, reference, home = false) {
+        const container = reference.parentElement;
+        let link = container.querySelector(':scope > [data-jfc-watch-entry]');
+        if (!link) {
+            link = make('a', home ? 'jfc-watch-tile' : 'jfc-watch-tab');
+            link.dataset.jfcWatchEntry = 'true';
+            link.append(icon('play_arrow'), make('span', '', 'Movies & Shows'));
+            reference.before(link);
+        }
+        link.href = watchHref(session);
+        if (new URLSearchParams(location.hash.split('?')[1]).get('jfc') === 'watch') link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+        return link;
+    }
+
+    function loadWatchLibraries(client, userId) {
+        const session = { client, userId, libraries: null, rows: null };
+        withRequestTimeout(() => client.getUserViews({}, userId)).then(result => {
+            if (!Array.isArray(result?.Items)) throw new Error('Missing libraries');
+            session.libraries = result.Items.filter(item => Object.hasOwn(watchTypes, item.CollectionType) && item.Id)
+                .sort((a, b) => Number(b.CollectionType === 'movies') - Number(a.CollectionType === 'movies'));
+        }).catch(error => {
+            session.libraries = [];
+            reportFailure('Movies & Shows libraries', error);
+        }).finally(() => { if (session === watchSession) schedule(); });
+        return session;
+    }
+
+    function watchDetails(item, client) {
+        const route = window.Emby?.Page?.getRouteUrl({ ...item, ServerId: item.ServerId || client.serverId() });
+        return typeof route === 'string' && route.startsWith('#/details?') ? route : null;
+    }
+
+    function watchArtwork(client, item, landscape = false) {
+        if (!item) return null;
+        const backdrop = landscape && (item.BackdropImageTags?.[0] || item.ParentBackdropImageTags?.[0]);
+        const artId = backdrop && !item.BackdropImageTags?.[0] ? item.ParentBackdropItemId : item.Id;
+        const tag = backdrop || item.ImageTags?.Primary;
+        if (!tag || !artId || typeof client.getScaledImageUrl !== 'function') return null;
+        const img = make('img');
+        img.alt = '';
+        img.decoding = 'async';
+        if (!landscape) img.loading = 'lazy';
+        img.addEventListener('error', () => img.remove(), { once: true });
+        img.src = client.getScaledImageUrl(artId, {
+            type: backdrop ? 'Backdrop' : 'Primary', tag, maxWidth: landscape ? 1800 : 360, quality: 85
+        });
+        return img;
+    }
+
+    function loadWatchRows(session) {
+        const { client, userId } = session;
+        const queries = session.libraries.map(library => {
+            const type = watchTypes[library.CollectionType].kind;
+            return withRequestTimeout(() => client.getItems(userId, {
+                ParentId: library.Id, Recursive: true, IncludeItemTypes: type,
+                Limit: 20, SortBy: 'DateCreated', SortOrder: 'Descending', Fields: 'Overview,Genres,DateCreated',
+                EnableTotalRecordCount: false
+            })).then(result => {
+                if (!Array.isArray(result?.Items)) throw new Error('Missing catalog');
+                return result.Items.filter(item => item.Type === type);
+            });
+        });
+        const resume = withRequestTimeout(() => client.getResumableItems(userId, {
+            MediaTypes: 'Video', Limit: 16, EnableTotalRecordCount: false
+        })).then(result => (result.Items || []).filter(item => ['Movie', 'Episode', 'Series'].includes(item.Type)));
+        session.rows = Promise.allSettled([...queries, resume]).then(results => {
+            const unique = new Map();
+            for (const result of results.slice(0, -1)) {
+                if (result.status === 'fulfilled') result.value.forEach(item => unique.set(item.Id, item));
+            }
+            const latest = [...unique.values()].sort((a, b) => (Date.parse(b.DateCreated) || 0) - (Date.parse(a.DateCreated) || 0));
+            session.result = { latest, resume: results.at(-1).value || [], failed: results.some(result => result.status === 'rejected') };
+            session.loadedAt = Date.now();
+            return session.result;
+        });
+        return session.rows;
+    }
+
+    function watchRow(view, title, items, progress = false) {
+        const { client } = view.session;
+        const shelf = makeShelf({ title, noun: title.toLowerCase().replaceAll(' ', '-'), icon: progress ? 'play_arrow' : 'layers' });
+        shelf.section.classList.add('jfc-watch-row');
+        shelf.track.classList.toggle('jfc-watch-resume', progress);
+        for (const item of items) {
+            const href = watchDetails(item, client);
+            if (!href) continue;
+            const card = make('a', 'jfc-watch-card');
+            card.href = href;
+            const art = make('span', 'jfc-watch-art');
+            art.append(icon('play_arrow'));
+            const image = watchArtwork(client, item, progress);
+            if (image) art.append(image);
+            const percentage = Math.min(100, Math.max(0, Number(item.UserData?.PlayedPercentage) || 0));
+            if (progress && percentage) {
+                const indicator = make('progress', 'jfc-watch-progress');
+                indicator.max = 100;
+                indicator.value = percentage;
+                indicator.setAttribute('aria-label', 'Playback progress');
+                art.append(indicator);
+            }
+            const name = make('strong', '', item.SeriesName && item.Type === 'Episode' ? item.SeriesName : item.Name);
+            const note = item.Type === 'Episode' ? item.Name : [item.ProductionYear, item.Type === 'Movie' ? 'Movie' : 'Series'].filter(Boolean).join(' · ');
+            card.append(art, name, make('span', 'jfc-watch-meta', note));
+            shelf.track.append(card);
+        }
+        if (!shelf.track.childElementCount) return;
+        shelf.body.append(shelf.track);
+        view.panel.append(shelf.section);
+        shelf.updateArrows();
+        view.arrows.push(shelf.updateArrows);
+    }
+
+    function renderWatch(view, data) {
+        const { session, filter, panel } = view;
+        view.data = data;
+        view.arrows = [];
+        const matches = item => filter === 'all' || (filter === 'movies' ? item.Type === 'Movie' : item.Type !== 'Movie');
+        const latest = data?.latest.filter(matches) || [];
+        const featured = latest.find(item => item.BackdropImageTags?.length && watchDetails(item, session.client)) || latest[0];
+        const hero = make('header', 'jfc-watch-feature');
+        const art = watchArtwork(session.client, featured, true);
+        if (art) hero.append(art);
+        const copy = make('div', 'jfc-watch-feature-copy');
+        copy.append(make('p', 'jfc-watch-kicker', featured ? 'FEATURED ' + (featured.Type === 'Movie' ? 'MOVIE' : 'SERIES') : 'CINEMATIC'));
+        copy.append(make('h1', '', featured?.Name || 'Movies & Shows'));
+        if (featured) {
+            copy.append(make('p', 'jfc-watch-meta', [featured.ProductionYear, featured.OfficialRating, ...((featured.Genres || []).slice(0, 2))].filter(Boolean).join(' · ')));
+            if (featured.Overview) copy.append(make('p', 'jfc-watch-overview', featured.Overview));
+            const href = watchDetails(featured, session.client);
+            if (href) {
+                const details = make('a', 'jfc-watch-details', 'View details');
+                details.href = href;
+                copy.append(details);
+            }
+        }
+        hero.append(copy);
+        const controls = make('nav', 'jfc-watch-filters');
+        controls.setAttribute('aria-label', 'Movies and shows filters');
+        for (const [type, label] of [['all', 'All'], ['movies', 'Movies'], ['tvshows', 'Shows']]) {
+            if (type !== 'all' && !session.libraries.some(library => library.CollectionType === type)) continue;
+            const link = watchLink(session, label, type);
+            if (filter === type) link.setAttribute('aria-current', 'page');
+            controls.append(link);
+        }
+        const libraries = make('details', 'jfc-watch-libraries');
+        libraries.append(make('summary', '', 'Browse libraries'));
+        session.libraries.filter(library => filter === 'all' || library.CollectionType === filter).forEach(library => {
+            const link = make('a', '', library.Name || watchTypes[library.CollectionType].label);
+            link.href = watchLibraryHref(library);
+            libraries.append(link);
+        });
+        controls.append(libraries);
+        panel.replaceChildren(controls, hero);
+        if (!data) {
+            const status = make('p', 'jfc-watch-status', 'Loading your library…');
+            status.setAttribute('role', 'status');
+            panel.append(status);
+            return;
+        }
+        watchRow(view, 'Continue Watching', data.resume.filter(matches), true);
+        watchRow(view, 'Recently Added Movies', latest.filter(item => item.Type === 'Movie').slice(0, 20));
+        watchRow(view, 'Recently Added Shows', latest.filter(item => item.Type === 'Series').slice(0, 20));
+        if (data.failed || (!latest.length && !data.resume.some(matches))) {
+            const status = make('p', 'jfc-watch-status', data.failed ? 'Some titles could not be loaded.' : 'No titles have been added to this view yet.');
+            if (data.failed) {
+                const retry = make('button', 'jfc-watch-details', 'Retry');
+                retry.type = 'button';
+                retry.addEventListener('click', () => {
+                    session.rows = null;
+                    session.result = null;
+                    watchView = null;
+                    panel.remove();
+                    schedule();
+                });
+                status.append(' ', retry);
+            }
+            panel.append(status);
+        }
+    }
+
+    function clearWatchPage() {
+        if (!watchView) return;
+        watchView.page.classList.remove('jfc-watch-active');
+        watchView.panel.remove();
+        watchView = null;
+    }
+
+    function updateWatch(enabled, header, sections, route) {
+        const client = window.ApiClient;
+        const userId = enabled && header && client?.getCurrentUserId?.();
+        if (watchSession && (watchSession.client !== client || watchSession.userId !== userId)) {
+            clearWatchPage();
+            document.querySelectorAll('[data-jfc-watch-entry]').forEach(entry => entry.remove());
+            watchSession = null;
+        }
+        if (!userId) return;
+        if (!watchSession) watchSession = loadWatchLibraries(client, userId);
+        const session = watchSession;
+        if (!session.libraries?.length) return;
+
+        const desktopEntry = header.querySelector(watchNativeLinks) || header.querySelector('a[href="#/home?tab=1"]');
+        if (desktopEntry) watchEntry(session, desktopEntry);
+        const drawerEntry = document.querySelector('.MuiDrawer-root ' + watchNativeLinks);
+        if (drawerEntry) watchEntry(session, drawerEntry);
+        const homeTile = sections?.querySelector('.card:is([data-jfc-kind="movies"], [data-jfc-kind="tvshows"])');
+        if (homeTile) watchEntry(session, homeTile, true);
+
+        const params = new URLSearchParams(location.hash.split('?')[1]);
+        const page = params.get('jfc') === 'watch' && (route === '#/movies' || route === '#/tv') &&
+            document.querySelector(route === '#/movies' ? '#moviesPage' : '#tvshowsPage');
+        if (!page) return clearWatchPage();
+        const requested = params.get('filter');
+        const filter = session.libraries.some(library => library.CollectionType === requested) ? requested : 'all';
+        if (watchView?.page === page && watchView.filter === filter && watchView.panel.isConnected) {
+            watchView.arrows.forEach(update => update());
+            return;
+        }
+        const entering = !watchView;
+        clearWatchPage();
+        const panel = make('section', 'jfc-watch');
+        const view = { session, page, panel, filter, arrows: [] };
+        watchView = view;
+        page.classList.add('jfc-watch-active');
+        page.prepend(panel);
+        renderWatch(view, session.result);
+        const expired = entering && session.loadedAt && Date.now() - session.loadedAt > 60000;
+        const result = !session.rows || expired ? loadWatchRows(session) : session.rows;
+        result.then(data => {
+            if (data === view.data) return;
+            if (watchView === view && location.hash.includes('jfc=watch')) renderWatch(view, data);
+        });
+    }
+
     function refresh() {
         pendingFrame = 0;
         const root = document.documentElement;
@@ -623,6 +1786,7 @@
         }
 
         updateMusic(musicPage, header, cssReady);
+        updateTrackActions(cssReady && desktopOrMobile ? playlistTrackScope() : null);
         const homeActive = cssReady && sections && tab.classList.contains('is-active') &&
             getComputedStyle(tab).getPropertyValue('--jfc-hero-height').trim();
         if (homeActive) {
@@ -646,6 +1810,7 @@
                 headerNav?.remove();
             }
         }
+        updateWatch(cssReady && desktopOrMobile, modernHeader, homeActive ? sections : null, route);
 
         const pageSelectors = { '#/movies': '#moviesPage', '#/tv': '#tvshowsPage, #tvRecommendedPage',
             '#/details': '#itemDetailPage', '#/queue': '#nowPlayingPage', '#/video': '.videoOsdBottom' };
@@ -663,6 +1828,7 @@
         if (music?.modern && !music.userId) waiting.push('Signed-in Jellyfin API client');
         if (cssReady && modernHeader) modules.push('Modern navigation CSS');
         if (homeActive) modules.push('Home hero and library tiles');
+        if (watchView) modules.push('Movies & Shows dashboard');
         if (music) modules.push(music.modern ? 'Modern Music dashboard' : 'Legacy Music dashboard');
         if (cssReady && view) modules.push(view.id || route.slice(2));
         if (debug) {
@@ -710,7 +1876,7 @@
     function watchReactRoot() {
         const app = document.getElementById('reactRoot');
         if (!app) return;
-        const selector = '[data-role="page"], .MuiAppBar-root, .skinHeader, style, #library-view-menu';
+        const selector = '[data-role="page"], .MuiAppBar-root, .skinHeader, .MuiDrawer-root, style, #library-view-menu, a[href="#/home?tab=1"]';
         new MutationObserver(records => {
             if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node =>
                 node instanceof Element && (node.matches(selector) || node.querySelector(selector))
