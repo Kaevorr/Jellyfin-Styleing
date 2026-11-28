@@ -23,7 +23,31 @@ At widths up to 42em, Modern Music uses compact, swipeable library links and art
 
 **Movies & Shows** appears in the Modern navigation and on Home when the signed-in user has a movie or show library. The combined view opens without a category selected. Select **Movies** or **Shows** to narrow the view, or choose **Clear filter** to return. Select a title to open its native detail page. **Browse libraries** opens the complete Jellyfin library with its usual search, filters, and sorting.
 
-The [Kaevorr JellyNext fork](https://github.com/Kaevorr/jellynext) can mount its Discovery shelves directly inside Movies & Shows. The unfiltered view shows both shelves. **Movies** and **Shows** show the corresponding shelf. The **Discovery** shortcut appears when a shelf is available. JellyNext supplies its own catalogs, recommendations, requests, and playback actions. Its appearance overrides can still be configured in JellyNext. [JellyNext setup and styling](https://github.com/Kaevorr/jellynext/blob/main/STYLING.md)
+### JellyNext 1.10.1.0 Discovery
+
+The combined view shows both Discovery sections. **Movies** and **Shows** show the corresponding section. With the IMDb snapshot set up, **Movie Discovery** opens on alphabetical genre shelves. **See all** opens that genre in title A–Z order, with 24 results per page. **Movie title** and **Release year** can be combined. Use **Apply filters**, **Clear filters**, and **All genres** within Discovery. The Cinematic **Clear filter** instead switches back to the combined Movies & Shows view. [JellyNext catalog setup](https://github.com/Kaevorr/jellynext#movie-catalog-setup-and-coverage)
+
+The catalog covers non-adult movie entries in the installed IMDb snapshot. The snapshot supplies titles and genres, and JellyNext can load more details from Trakt when a match exists. **Watch**, **Download**, **Download & Watch**, and download progress use JellyNext's configuration and permissions. [JellyNext Discovery guide](https://github.com/Kaevorr/jellynext#discovery-inside-movies-and-shows)
+
+#### Customize genre order and CSS
+
+In **Dashboard → Plugins → JellyNext → Settings → General → Discovery appearance → Custom CSS**, add rules like these, save, and refresh Jellyfin Web.
+
+```css
+/* On the combined page, put Action first and Comedy second. */
+.jellynext-discovery[data-jellynext-layout="combined"] .jellynext-genre[data-jellynext-genre-key="action"] {
+    --jellynext-genre-order: -2;
+}
+.jellynext-discovery[data-jellynext-layout="combined"] .jellynext-genre[data-jellynext-genre-key="comedy"] {
+    --jellynext-genre-order: -1;
+}
+/* Change the width of Movie Discovery posters. */
+.jellynext-discovery[data-jellynext-type="movies"] {
+    --jellynext-card-width: clamp(8rem, 14vw, 12rem);
+}
+```
+
+Smaller genre order numbers come first. Equal numbers retain the alphabetical shelf order. This is a visual adjustment. The keyboard order and title A–Z order within a genre come from JellyNext. The styling reference also covers hiding Discovery, switching rows to grids, poster ratios, and dialog appearance. [JellyNext CSS reference](https://github.com/Kaevorr/jellynext/blob/main/STYLING.md)
 
 ## Music Playlists
 
@@ -39,4 +63,4 @@ The [compatibility check](tests/verify-web-12.4.cjs) runs against the compiled o
 
 For local development, build the official `v12.4` checkout with `npm ci` and `npm run build:development`. With Playwright installed and its Chromium browser available, run `node tests/verify-web-12.4.cjs . /path/to/jellyfin-web/dist`.
 Set `JFC_THEME_BASE_URL` to a compatible hosted theme directory to exercise that copy. The default fixture serves the repository files locally.
-Set `JFC_JELLYNEXT_SCRIPT` to the fork's `Jellyfin.Plugin.JellyNext/Resources/discovery.js` to include its actual discovery client in the fixture. The fixture supplies mock catalog, permissions, recommendation, and request responses.
+Set `JFC_JELLYNEXT_SCRIPT` to the fork's `Jellyfin.Plugin.JellyNext/Resources/discovery.js` from JellyNext 1.10.1.0 to include its actual Discovery client in the fixture. The fixture supplies mock IMDb genre pages, permissions, recommendations, and download progress.

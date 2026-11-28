@@ -1719,7 +1719,8 @@
         const discover = make('button', 'jfc-watch-discover', 'Discovery');
         discover.type = 'button';
         discover.addEventListener('click', () => {
-            const heading = discovery.querySelector('.jellynext-discovery:not([hidden]) .jellynext-heading');
+            const heading = [...discovery.querySelectorAll('.jellynext-heading')]
+                .find(candidate => candidate.getClientRects().length);
             if (!heading) return;
             heading.tabIndex = -1;
             heading.focus({ preventScroll: true });
@@ -1766,6 +1767,7 @@
 
     function clearWatchPage() {
         if (!watchView) return;
+        watchView.discoveryObserver.disconnect();
         watchView.page.classList.remove('jfc-watch-active');
         watchView.panel.remove();
         watchView = null;
@@ -1820,7 +1822,11 @@
         const discovery = make('div');
         const recent = make('div');
         panel.append(chrome, spotlight, resume, discovery, recent);
-        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [] };
+        const discoveryObserver = new ResizeObserver(() => {
+            panel.classList.toggle('jfc-watch-has-discovery', discovery.getBoundingClientRect().height > 0);
+        });
+        discoveryObserver.observe(discovery);
+        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [], discoveryObserver };
         watchView = view;
         page.classList.add('jfc-watch-active');
         page.prepend(panel);

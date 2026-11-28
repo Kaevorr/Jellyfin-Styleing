@@ -1525,7 +1525,7 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     cursor: pointer;
 }
 
-.jfc-watch:has([data-jellynext-discovery] > .jellynext-discovery:not([hidden])) .jfc-watch-discover {
+.jfc-watch.jfc-watch-has-discovery .jfc-watch-discover {
     display: inline-flex;
     align-items: center;
 }
@@ -1780,6 +1780,13 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     --jellynext-card-width: clamp(116px, 13vw, 218px);
     --jellynext-card-gap: clamp(10px, 1vw, 19px);
     --jellynext-card-radius: 10px;
+    --jellynext-genre-gap: .5rem;
+    --jellynext-genre-header-justify: space-between;
+    --jellynext-genre-title-size: clamp(1.12rem, 2vw, 1.55rem);
+    --jellynext-title-weight: 720;
+    --jellynext-year-size: .86rem;
+    --jellynext-input-background: #191619;
+    --jellynext-input-border: #60424b;
     --jellynext-poster-background: linear-gradient(147deg, #35141d, var(--jfc-panel));
     --jellynext-dialog-background: #151216;
     --jellynext-dialog-width: 54rem;
@@ -1792,9 +1799,9 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 }
 
 .jfc-watch [data-jellynext-discovery] > .jellynext-discovery:not([hidden]) {
-    margin-block: 0 24px;
+    margin-block: var(--jellynext-combined-margin, 0 24px);
     padding-block: 8px 4px;
-    padding-inline: var(--jfc-watch-gutter);
+    padding-inline: var(--jellynext-combined-gutter, var(--jfc-watch-gutter));
 }
 
 .jfc-watch .jellynext-heading {
@@ -1820,7 +1827,23 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     font-size: .9rem;
 }
 
-.jellynext-dialog :is(.jellynext-watch, .jellynext-download):enabled:hover {
+.jfc-watch :is(.jellynext-title-filter, .jellynext-year-filter) {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.jfc-watch .jellynext-genre-title {
+    font-weight: 780;
+    scroll-margin-top: 70px;
+}
+
+.jfc-watch :is(.jellynext-catalog-credit, .jellynext-catalog-credit a) {
+    color: var(--jellynext-muted);
+    font-size: .86rem;
+}
+
+.jellynext-dialog :is(.jellynext-watch, .jellynext-download):enabled:hover,
+.jfc-watch .jellynext-discovery button:not(.jellynext-card):enabled:hover {
     border-color: var(--jfc-bright);
 }
 

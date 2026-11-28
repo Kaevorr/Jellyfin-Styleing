@@ -192,14 +192,21 @@
             if (low.endsWith('/discovery/show')) return json({ linked: true, enabled: true, items: [
                 { id: 202, title: 'Trakt Fixture Show', year: 2025, canRequest: true, seasons: 3 },
             ] });
+            const movie = { id: 'tt0000101', title: url.searchParams.get('query') || 'Catalog Fixture Movie', year: 2024 };
+            if (low.endsWith('/moviecatalog/genres')) return json([
+                { name: 'Action', items: [movie] },
+                { name: 'Comedy', items: [{ id: 'tt0000102', title: 'Comedy Fixture Movie', year: 2024 }] }
+            ]);
             if (low.endsWith('/moviecatalog')) return json({ pageCount: 2, items: [
-                { id: 101, title: url.searchParams.get('query') || 'Catalog Fixture Movie', year: 2024, canRequest: true },
+                url.searchParams.get('page') === '2' ? { id: 'tt0000103', title: 'Later Fixture Movie', year: 2024 } : movie,
             ] });
             if (low.endsWith('/details/show/202')) return json({
                 year: 2025, overview: 'A show recommendation.', canDownload: true,
-                watchItemId: url.searchParams.get('season') === '1' ? catalog[1].Id : null
+                watchItemId: url.searchParams.get('season') === '1' ? catalog[1].Id : null,
+                downloadProgress: url.searchParams.get('season') === '2' && discoveryRequests.includes('2')
+                    ? { state: 'downloading', percent: 48, source: 'Sonarr' } : null
             });
-            if (low.endsWith('/details/movie/101')) return json({
+            if (low.endsWith('/details/movie/imdb/tt0000101')) return json({
                 year: 2024, overview: 'A movie catalog result.', canDownload: false,
                 downloadUnavailableReason: 'Ask an administrator to enable Discovery downloads for your Jellyfin user.'
             });
@@ -609,6 +616,10 @@
             const showDiscovery = discovery.locator('[data-jellynext-type="shows"]');
             await movieDiscovery.getByRole('button', { name: /Catalog Fixture Movie/ }).waitFor();
             await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
+            assert.deepEqual(await movieDiscovery.locator('.jellynext-genre-title').allTextContents(), ['Action', 'Comedy']);
+            const hideDiscovery = await page.addStyleTag({ content: '.jellynext-discovery { --jellynext-discovery-display: none; }' });
+            await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).waitFor({ state: 'hidden' });
+            await hideDiscovery.evaluate(style => style.remove());
             assert(await watch.evaluate(panel => {
                 const shelf = panel.querySelector('.jfc-watch-resume-shelf');
                 const fallback = [panel, panel.parentElement].map(parent => {
@@ -624,9 +635,22 @@
                 return correctlyOrdered;
             }));
             await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).click();
-            assert(await movieDiscovery.getByRole('heading').evaluate(heading => document.activeElement === heading));
+            assert(await movieDiscovery.getByRole('heading', { name: 'Movie Discovery' }).evaluate(heading => document.activeElement === heading));
             await movieDiscovery.getByRole('searchbox').fill('Fixture Search');
-            await movieDiscovery.getByRole('button', { name: 'Search movies', exact: true }).click();
+            await movieDiscovery.getByRole('spinbutton', { name: 'Release year' }).fill('2024');
+            await movieDiscovery.getByRole('button', { name: 'Apply filters', exact: true }).click();
+            await movieDiscovery.getByRole('button', { name: /Fixture Search/ }).waitFor();
+            await movieDiscovery.getByRole('button', { name: 'See all Action movies' }).click();
+            await movieDiscovery.getByText(/Page 1 of 2 · Title A–Z/).waitFor();
+            await movieDiscovery.getByRole('button', { name: 'Next page' }).click();
+            await movieDiscovery.getByRole('button', { name: /Later Fixture Movie/ }).waitFor();
+            assert(requestLog.some(route => {
+                const url = new URL(route, base);
+                const q = url.searchParams;
+                return url.pathname.endsWith('/MovieCatalog') && q.get('genre') === 'Action' &&
+                    q.get('page') === '2' && q.get('query') === 'Fixture Search' && q.get('year') === '2024';
+            }));
+            await movieDiscovery.getByRole('button', { name: 'Previous page' }).click();
             await movieDiscovery.getByRole('button', { name: /Fixture Search/ }).waitFor();
             await watchFilters.getByRole('link', { name: 'Movies', exact: true }).click();
             await showDiscovery.waitFor({ state: 'detached' });
@@ -645,7 +669,7 @@
             assert.equal(await modal.evaluate(node => getComputedStyle(node).getPropertyValue('--jellynext-card-radius').trim()), '14px');
             await modal.getByRole('combobox').selectOption('2');
             await modal.getByRole('button', { name: 'Download', exact: true }).click();
-            await modal.getByText(/Download requested/).waitFor();
+            await modal.getByText(/Downloading · 48% · Sonarr/).waitFor();
             assert.deepEqual(discoveryRequests, ['2']);
             await modal.getByRole('combobox').selectOption('1');
             await modal.getByRole('button', { name: 'Watch', exact: true }).click();

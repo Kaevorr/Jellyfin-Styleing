@@ -2,6 +2,7 @@
 
 ## Movies & Shows
 
+- Styled JellyNext 1.10.1.0 genre shelves, catalog filters, and title actions. The Discovery shortcut follows CSS visibility settings.
 - Placed Continue Watching below the featured title and above JellyNext Discovery and recent additions.
 - Kept Continue Watching above JellyNext Discovery while loading and across all filters.
 - Put Continue Watching first and added native resume actions. Updated video title pages and the playback overlay.
