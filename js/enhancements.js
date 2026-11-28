@@ -28,7 +28,7 @@
 
     const stylesheet = '--jfc-theme-version';
     const tileSelector = [
-        '.homeLibraryButton[href]',
+        '.homeLibraryButton[href]:not([data-jfc-watch-entry])',
         '.itemsContainer > .card:is([data-type="CollectionFolder"], [data-collectiontype]) .cardImageContainer[href]',
         '.itemsContainer > .card .cardImageContainer:is([href^="#/movies?"], [href^="#/tv?"], [href^="#/music?"])'
     ].join(',');
@@ -1523,9 +1523,11 @@
         const container = reference.parentElement;
         let link = container.querySelector(':scope > [data-jfc-watch-entry]');
         if (!link) {
-            link = make('a', home ? 'jfc-watch-tile' : 'jfc-watch-tab');
+            link = make('a', home ? 'homeLibraryButton jfc-watch-tile' : 'jfc-watch-tab');
             link.dataset.jfcWatchEntry = 'true';
-            link.append(icon('play_arrow'), make('span', '', 'Movies & Shows'));
+            const decoration = home ? make('span', 'homeLibraryIcon') : icon('play_arrow');
+            decoration.setAttribute('aria-hidden', 'true');
+            link.append(decoration, make('span', home ? 'homeLibraryText' : '', 'Movies & Shows'));
             reference.before(link);
         }
         link.href = watchHref(session);
@@ -1699,12 +1701,13 @@
         hero.append(copy);
         const controls = make('nav', 'jfc-watch-filters');
         controls.setAttribute('aria-label', 'Movies and shows filters');
-        for (const [type, label] of [['all', 'All'], ['movies', 'Movies'], ['tvshows', 'Shows']]) {
-            if (type !== 'all' && !session.libraries.some(library => library.CollectionType === type)) continue;
+        for (const [type, label] of [['movies', 'Movies'], ['tvshows', 'Shows']]) {
+            if (!session.libraries.some(library => library.CollectionType === type)) continue;
             const link = watchLink(session, label, type);
             if (filter === type) link.setAttribute('aria-current', 'page');
             controls.append(link);
         }
+        if (filter !== 'all') controls.append(watchLink(session, 'Clear filter', 'all', 'jfc-watch-clear'));
         const libraries = make('details', 'jfc-watch-libraries');
         libraries.append(make('summary', '', 'Browse libraries'));
         session.libraries.filter(library => filter === 'all' || library.CollectionType === filter).forEach(library => {
@@ -1801,7 +1804,8 @@
             if (watchView.filter !== filter) {
                 watchView.filter = filter;
                 renderWatch(watchView, watchView.data);
-                watchView.chrome.querySelector('.jfc-watch-filters a[aria-current]')?.focus({ preventScroll: true });
+                const filters = watchView.chrome.querySelector('.jfc-watch-filters');
+                (filters?.querySelector('a[aria-current]') || filters?.querySelector('a'))?.focus({ preventScroll: true });
             } else {
                 watchView.arrows.forEach(update => update());
             }

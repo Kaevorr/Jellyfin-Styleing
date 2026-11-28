@@ -21,9 +21,9 @@ The legacy layout adapter remains available. Current verification targets 12.4 M
 
 At widths up to 42em, Modern Music uses compact, swipeable library links and artwork rows. **All Songs** opens Jellyfin's complete Songs view for the selected library, with its own sorting, filters, and playback controls.
 
-**Movies & Shows** appears in the Modern navigation and on Home when the signed-in user has a movie or show library. The All, Movies, and Shows filters use real artwork, recent additions, and watch progress from Jellyfin. Select a title to open its native detail page. **Browse libraries** opens the complete Jellyfin library with its usual search, filters, and sorting.
+**Movies & Shows** appears in the Modern navigation and on Home when the signed-in user has a movie or show library. The combined view opens without a category selected. Select **Movies** or **Shows** to narrow the view, or choose **Clear filter** to return. Select a title to open its native detail page. **Browse libraries** opens the complete Jellyfin library with its usual search, filters, and sorting.
 
-The [Kaevorr JellyNext fork](https://github.com/Kaevorr/jellynext) can mount its Discovery shelves directly inside Movies & Shows. **All** shows both shelves. **Movies** and **Shows** show the corresponding shelf. The **Discovery** shortcut appears when a shelf is available. JellyNext supplies its own catalogs, recommendations, requests, and playback actions. Its appearance overrides can still be configured in JellyNext. [JellyNext setup and styling](https://github.com/Kaevorr/jellynext/blob/main/STYLING.md)
+The [Kaevorr JellyNext fork](https://github.com/Kaevorr/jellynext) can mount its Discovery shelves directly inside Movies & Shows. The unfiltered view shows both shelves. **Movies** and **Shows** show the corresponding shelf. The **Discovery** shortcut appears when a shelf is available. JellyNext supplies its own catalogs, recommendations, requests, and playback actions. Its appearance overrides can still be configured in JellyNext. [JellyNext setup and styling](https://github.com/Kaevorr/jellynext/blob/main/STYLING.md)
 
 ## Music Playlists
 
