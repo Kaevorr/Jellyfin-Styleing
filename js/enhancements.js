@@ -284,25 +284,14 @@
         return document.querySelector('.libraryMenuOptions a[href^="#/"]:has(.navMenuOptionIcon.' + iconName + ')');
     }
 
-    function makeShelf(definition) {
-        const section = make('section', 'jfc-music-shelf');
-        section.tabIndex = -1;
-        section.id = 'jfc-music-' + definition.noun;
-        const heading = make('h2', 'jfc-music-shelf-title');
-        heading.id = section.id + '-heading';
-        heading.append(icon(definition.icon), make('span', '', definition.title));
-        section.setAttribute('aria-labelledby', heading.id);
-        const track = make('div', 'jfc-music-track');
-        track.tabIndex = 0;
-        track.setAttribute('role', 'group');
-        track.setAttribute('aria-labelledby', heading.id);
+    function makeShelfArrows(track, trackLabel) {
         const previous = musicButton('button', '', 'chevron_left');
         const next = musicButton('button', '', 'chevron_right');
         const controls = make('div', 'jfc-music-scroll');
         controls.append(previous, next);
         for (const [button, direction, label] of [[previous, -1, 'Previous'], [next, 1, 'Next']]) {
             button.type = 'button';
-            button.setAttribute('aria-label', label + ' ' + definition.noun);
+            button.setAttribute('aria-label', label + ' ' + trackLabel);
             button.disabled = true;
             button.addEventListener('click', () => {
                 const sign = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
@@ -319,6 +308,22 @@
             next.disabled = limit < 2 || offset >= limit - 2;
         }
         track.addEventListener('scroll', updateArrows, { passive: true });
+        return { controls, updateArrows, dispose: () => track.removeEventListener('scroll', updateArrows) };
+    }
+
+    function makeShelf(definition) {
+        const section = make('section', 'jfc-music-shelf');
+        section.tabIndex = -1;
+        section.id = 'jfc-music-' + definition.noun;
+        const heading = make('h2', 'jfc-music-shelf-title');
+        heading.id = section.id + '-heading';
+        heading.append(icon(definition.icon), make('span', '', definition.title));
+        section.setAttribute('aria-labelledby', heading.id);
+        const track = make('div', 'jfc-music-track');
+        track.tabIndex = 0;
+        track.setAttribute('role', 'group');
+        track.setAttribute('aria-labelledby', heading.id);
+        const { controls, updateArrows } = makeShelfArrows(track, definition.noun);
         const header = make('div', 'jfc-music-shelf-header');
         header.append(heading, controls);
         const body = make('div', 'jfc-music-shelf-body');
@@ -1748,9 +1753,88 @@
 
     function clearWatchPage() {
         if (!watchView) return;
+        watchView.stopDiscovery();
         watchView.page.classList.remove('jfc-watch-active');
         watchView.panel.remove();
         watchView = null;
+    }
+
+    function observeWatchDiscovery(page) {
+        const tracks = new Map();
+        const flagged = new Map();
+        const resize = new ResizeObserver(entries => {
+            entries.forEach(({ target }) => tracks.get(target)?.update());
+        });
+
+        function update() {
+            for (const [track, record] of tracks) {
+                if (page.contains(track)) continue;
+                resize.unobserve(track);
+                record.dispose();
+                record.controls.remove();
+                tracks.delete(track);
+            }
+            for (const [section, notice] of flagged) {
+                const status = section.querySelector('.jellynext-catalog-status');
+                if (page.contains(section) && /^Popular movies\b/i.test(status?.textContent.trim())) continue;
+                section.classList.remove('jfc-watch-old-movie-catalog');
+                notice.remove();
+                flagged.delete(section);
+            }
+            for (const section of page.querySelectorAll('.jellynext-discovery[data-jellynext-type="movies"]')) {
+                const status = section.querySelector('.jellynext-catalog-status');
+                if (flagged.has(section) || section.querySelector('.jellynext-genre-results') ||
+                    !/^Popular movies\b/i.test(status?.textContent.trim())) continue;
+                const notice = make('p', 'jfc-watch-catalog-notice', 'This Movie Discovery feed uses the older catalog. ');
+                const setup = make('a', '', 'Install JellyNext 1.10.1.0 and set up the IMDb catalog');
+                setup.href = 'https://github.com/Kaevorr/Jellyfin-Styleing/blob/main/INSTALL.md#optional-jellynext-discovery';
+                notice.append(setup, '.');
+                section.classList.add('jfc-watch-old-movie-catalog');
+                status.after(notice);
+                flagged.set(section, notice);
+            }
+
+            for (const track of page.querySelectorAll('.jellynext-discovery .jellynext-cards:not(.jellynext-catalog-grid)')) {
+                if (tracks.has(track)) {
+                    tracks.get(track).update();
+                    continue;
+                }
+                const section = track.closest('.jellynext-genre, .jellynext-discovery');
+                const label = section.querySelector('.jellynext-genre-title, .jellynext-heading')?.textContent || 'titles';
+                const { controls, updateArrows, dispose } = makeShelfArrows(track, label);
+                controls.classList.add('jfc-watch-jellynext-arrows');
+                track.classList.add('jfc-watch-arrow-track');
+                track.before(controls);
+                const record = {
+                    controls, dispose,
+                    update() {
+                        updateArrows();
+                        controls.hidden = track.scrollWidth - track.clientWidth < 2 ||
+                            !track.getClientRects().length || getComputedStyle(track).overflowX === 'clip';
+                    }
+                };
+                tracks.set(track, record);
+                resize.observe(track);
+                record.update();
+            }
+        }
+
+        const observer = new MutationObserver(update);
+        observer.observe(page, { childList: true, subtree: true, characterData: true });
+        update();
+        return () => {
+            observer.disconnect();
+            resize.disconnect();
+            for (const [track, record] of tracks) {
+                track.classList.remove('jfc-watch-arrow-track');
+                record.dispose();
+                record.controls.remove();
+            }
+            for (const [section, notice] of flagged) {
+                section.classList.remove('jfc-watch-old-movie-catalog');
+                notice.remove();
+            }
+        };
     }
 
     function updateWatch(enabled, header, sections, route) {
@@ -1802,7 +1886,8 @@
         const discovery = make('div');
         const recent = make('div');
         panel.append(chrome, spotlight, resume, discovery, recent);
-        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [] };
+        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [],
+            stopDiscovery: observeWatchDiscovery(page) };
         watchView = view;
         page.classList.add('jfc-watch-active');
         page.prepend(panel);

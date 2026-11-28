@@ -194,7 +194,9 @@
             ] });
             const movie = { id: 'tt0000101', title: url.searchParams.get('query') || 'Catalog Fixture Movie', year: 2024 };
             if (low.endsWith('/moviecatalog/genres')) return json([
-                { name: 'Action', items: [movie] },
+                { name: 'Action', items: [movie, ...Array.from({ length: 7 }, (_, index) => ({
+                    id: 'tt' + String(index + 210).padStart(7, '0'), title: 'Extra Action Movie ' + index, year: 2024
+                }))] },
                 { name: 'Comedy', items: [{ id: 'tt0000102', title: 'Comedy Fixture Movie', year: 2024 }] }
             ]);
             if (low.endsWith('/moviecatalog')) return json({ pageCount: 2, items: [
@@ -618,6 +620,30 @@
             await movieDiscovery.getByRole('button', { name: /Catalog Fixture Movie/ }).waitFor();
             await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
             assert.deepEqual(await movieDiscovery.locator('.jellynext-genre-title').allTextContents(), ['Action', 'Comedy']);
+            const actionRow = movieDiscovery.locator('[data-jellynext-genre-key="action"]');
+            const actionTrack = actionRow.locator('.jellynext-cards');
+            assert.equal(await actionTrack.evaluate(track => getComputedStyle(track).scrollbarWidth), 'none');
+            await actionRow.getByRole('button', { name: 'Next Action' }).click();
+            await page.waitForFunction(() => document.querySelector('[data-jellynext-genre-key="action"] .jellynext-cards')?.scrollLeft > 0);
+            await actionRow.getByRole('button', { name: 'Previous Action' }).click();
+            await page.waitForFunction(() => document.querySelector('[data-jellynext-genre-key="action"] .jellynext-cards')?.scrollLeft === 0);
+            const legacy = await watch.evaluateHandle(panel => {
+                const section = document.createElement('section');
+                section.className = 'jellynext-discovery';
+                section.dataset.jellynextType = 'movies';
+                const status = document.createElement('p');
+                status.className = 'jellynext-catalog-status';
+                status.textContent = 'Popular movies · Page 1 of 2';
+                const cards = document.createElement('div');
+                cards.className = 'jellynext-cards';
+                cards.textContent = 'Legacy fixture catalog';
+                section.append(status, cards);
+                panel.append(section);
+                return section;
+            });
+            await watch.getByRole('link', { name: 'Install JellyNext 1.10.1.0 and set up the IMDb catalog' }).waitFor();
+            assert.equal(await watch.getByText('Legacy fixture catalog', { exact: true }).isVisible(), false);
+            await legacy.evaluate(section => section.remove());
             const hideDiscovery = await page.addStyleTag({ content: '.jellynext-discovery { --jellynext-discovery-display: none; }' });
             await movieDiscovery.waitFor({ state: 'hidden' });
             await showDiscovery.waitFor({ state: 'hidden' });

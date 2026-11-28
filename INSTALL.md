@@ -28,6 +28,8 @@ For genre shelves and the IMDb catalog, use Kaevorr JellyNext 1.10.1.0 with its 
 
 See [genre ordering and CSS examples](README.md#customize-genre-order-and-css) for optional JellyNext appearance changes.
 
+If Movie Discovery still shows **Popular movies**, check the JellyNext version in Jellyfin's plugin list and install the fork's 1.10.1.0 release. Restart Jellyfin after the plugin upgrade. In JS Injector, check for a manually added copy of the old JellyNext Discovery script and disable that copy if present. Refresh Jellyfin Web to load the registered script. [JellyNext 1.10.1.0 release](https://github.com/Kaevorr/jellynext/releases/tag/v1.10.1.0)
+
 ## Update or remove
 
 The links stay the same when an update publishes. Refresh Jellyfin Web to load the update. To switch themes, replace the links. To restore Jellyfin’s original appearance, remove the CSS import, disable the Cinematic script entry, and refresh.

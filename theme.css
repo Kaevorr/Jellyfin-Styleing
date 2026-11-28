@@ -1604,7 +1604,36 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 
 .jfc-watch-row .jfc-music-track {
     scroll-snap-type: x proximity;
-    scrollbar-width: thin;
+}
+
+.jfc-watch-row .jfc-music-track,
+.jfc-watch-active .jfc-watch-arrow-track {
+    scrollbar-width: none;
+}
+
+.jfc-watch-row .jfc-music-track::-webkit-scrollbar,
+.jfc-watch-active .jfc-watch-arrow-track::-webkit-scrollbar {
+    display: none;
+}
+
+.jfc-watch-active .jfc-watch-jellynext-arrows {
+    display: flex;
+    justify-content: flex-end;
+    margin-block: 0 4px;
+}
+
+.jfc-watch-active .jfc-watch-jellynext-arrows[hidden],
+.jfc-watch-active .jfc-watch-old-movie-catalog :is(.jellynext-catalog-status, .jellynext-cards, .jfc-watch-jellynext-arrows, .jellynext-pagination) {
+    display: none;
+}
+
+.jfc-watch-catalog-notice {
+    color: var(--jfc-muted);
+    overflow-wrap: anywhere;
+}
+
+.jfc-watch-catalog-notice a {
+    color: var(--jfc-focus);
 }
 
 .jfc-watch-card {
@@ -1769,7 +1798,6 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
 
 .jfc-watch .jellynext-cards {
     scroll-snap-type: x proximity;
-    scrollbar-width: thin;
 }
 
 .jfc-watch .jellynext-card {

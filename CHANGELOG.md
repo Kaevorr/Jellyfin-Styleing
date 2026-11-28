@@ -2,6 +2,7 @@
 
 ## Movies & Shows
 
+- Replaced horizontal shelf scrollbars with arrow controls and added upgrade guidance when an older JellyNext Popular movies feed is detected.
 - Removed the Browse libraries and Discovery shortcuts from the toolbar.
 - Styled JellyNext 1.10.1.0 genre shelves, catalog filters, and title actions. The Discovery shortcut follows CSS visibility settings.
 - Placed Continue Watching below the featured title and above JellyNext Discovery and recent additions.
