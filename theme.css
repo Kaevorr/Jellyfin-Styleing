@@ -1494,9 +1494,7 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     background: #101013;
 }
 
-.jfc-watch-filters > a,
-.jfc-watch-discover,
-.jfc-watch-libraries summary {
+.jfc-watch-filters > a {
     box-sizing: border-box;
     min-height: 44px;
     padding: 9px 14px;
@@ -1515,46 +1513,6 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
     background: transparent;
     border-color: transparent;
     font-weight: 500;
-}
-
-.jfc-watch-discover {
-    display: none;
-    color: inherit;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.jfc-watch.jfc-watch-has-discovery .jfc-watch-discover {
-    display: inline-flex;
-    align-items: center;
-}
-
-.jfc-watch-discover:hover {
-    border-color: var(--jfc-bright);
-}
-
-.jfc-watch-libraries {
-    margin-inline-start: auto;
-}
-
-.jfc-watch-libraries summary {
-    cursor: pointer;
-}
-
-.jfc-watch-libraries[open] {
-    align-self: start;
-}
-
-.jfc-watch-libraries a {
-    display: flex;
-    min-height: 44px;
-    padding-inline: 12px;
-    overflow-wrap: anywhere;
-}
-
-.jfc-watch-libraries a:hover {
-    color: var(--jfc-bright);
 }
 
 .jfc-watch-feature {
@@ -1860,14 +1818,9 @@ html:has(.jfc-watch-active) .MuiAppBar-root .MuiToolbar-root:has(> button[aria-c
         min-height: clamp(300px, 51svh, 450px);
     }
 
-    .jfc-watch-filters > a,
-    .jfc-watch-libraries summary {
+    .jfc-watch-filters > a {
         padding-inline: 10px;
         font-size: .9rem;
-    }
-
-    .jfc-watch-libraries {
-        margin-inline-start: 0;
     }
 }
 

@@ -1494,8 +1494,8 @@
     }
 
     const watchTypes = {
-        movies: { kind: 'Movie', label: 'Movies', route: '#/movies' },
-        tvshows: { kind: 'Series', label: 'Shows', route: '#/tv' }
+        movies: { kind: 'Movie', route: '#/movies' },
+        tvshows: { kind: 'Series', route: '#/tv' }
     };
     let watchSession;
     let watchView;
@@ -1708,25 +1708,6 @@
             controls.append(link);
         }
         if (filter !== 'all') controls.append(watchLink(session, 'Clear filter', 'all', 'jfc-watch-clear'));
-        const libraries = make('details', 'jfc-watch-libraries');
-        libraries.append(make('summary', '', 'Browse libraries'));
-        session.libraries.filter(library => filter === 'all' || library.CollectionType === filter).forEach(library => {
-            const link = make('a', '', library.Name || watchTypes[library.CollectionType].label);
-            link.href = watchLibraryHref(library);
-            libraries.append(link);
-        });
-        controls.append(libraries);
-        const discover = make('button', 'jfc-watch-discover', 'Discovery');
-        discover.type = 'button';
-        discover.addEventListener('click', () => {
-            const heading = [...discovery.querySelectorAll('.jellynext-heading')]
-                .find(candidate => candidate.getClientRects().length);
-            if (!heading) return;
-            heading.tabIndex = -1;
-            heading.focus({ preventScroll: true });
-            heading.scrollIntoView({ block: 'start' });
-        });
-        controls.append(discover);
         chrome.replaceChildren(controls);
         spotlight.replaceChildren(hero);
         if (!watchRow(view, 'Continue Watching', data?.resume || [], true)) {
@@ -1767,7 +1748,6 @@
 
     function clearWatchPage() {
         if (!watchView) return;
-        watchView.discoveryObserver.disconnect();
         watchView.page.classList.remove('jfc-watch-active');
         watchView.panel.remove();
         watchView = null;
@@ -1822,11 +1802,7 @@
         const discovery = make('div');
         const recent = make('div');
         panel.append(chrome, spotlight, resume, discovery, recent);
-        const discoveryObserver = new ResizeObserver(() => {
-            panel.classList.toggle('jfc-watch-has-discovery', discovery.getBoundingClientRect().height > 0);
-        });
-        discoveryObserver.observe(discovery);
-        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [], discoveryObserver };
+        const view = { session, page, panel, chrome, resume, spotlight, discovery, recent, filter, arrows: [] };
         watchView = view;
         page.classList.add('jfc-watch-active');
         page.prepend(panel);

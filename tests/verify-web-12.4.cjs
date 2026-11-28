@@ -611,6 +611,7 @@
         });
         assert.equal(await page.locator('.MuiAppBar-root .jfc-watch-tab').getAttribute('aria-current'), 'page');
         const discovery = watch.locator('[data-jellynext-discovery]');
+        assert.equal(await watchFilters.getByText(/^(Browse libraries|Discovery)$/).count(), 0);
         if (discoveryScript) {
             const movieDiscovery = discovery.locator('[data-jellynext-type="movies"]');
             const showDiscovery = discovery.locator('[data-jellynext-type="shows"]');
@@ -618,8 +619,11 @@
             await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
             assert.deepEqual(await movieDiscovery.locator('.jellynext-genre-title').allTextContents(), ['Action', 'Comedy']);
             const hideDiscovery = await page.addStyleTag({ content: '.jellynext-discovery { --jellynext-discovery-display: none; }' });
-            await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).waitFor({ state: 'hidden' });
+            await movieDiscovery.waitFor({ state: 'hidden' });
+            await showDiscovery.waitFor({ state: 'hidden' });
             await hideDiscovery.evaluate(style => style.remove());
+            await movieDiscovery.waitFor();
+            await showDiscovery.waitFor();
             assert(await watch.evaluate(panel => {
                 const shelf = panel.querySelector('.jfc-watch-resume-shelf');
                 const fallback = [panel, panel.parentElement].map(parent => {
@@ -634,8 +638,6 @@
                 fallback.forEach(row => row.remove());
                 return correctlyOrdered;
             }));
-            await watchFilters.getByRole('button', { name: 'Discovery', exact: true }).click();
-            assert(await movieDiscovery.getByRole('heading', { name: 'Movie Discovery' }).evaluate(heading => document.activeElement === heading));
             await movieDiscovery.getByRole('searchbox').fill('Fixture Search');
             await movieDiscovery.getByRole('spinbutton', { name: 'Release year' }).fill('2024');
             await movieDiscovery.getByRole('button', { name: 'Apply filters', exact: true }).click();
@@ -680,7 +682,7 @@
             await movieDiscovery.getByRole('button', { name: /Catalog Fixture Movie/ }).waitFor();
             await showDiscovery.getByRole('button', { name: /Trakt Fixture Show/ }).waitFor();
         } else {
-            assert.equal(await watch.locator('.jfc-watch-discover').isVisible(), false);
+            assert.equal(await discovery.locator('.jellynext-discovery').count(), 0);
         }
         if (process.env.JFC_SCREENSHOTS)
             await page.screenshot({ path: path.join(process.env.JFC_SCREENSHOTS, 'watch-desktop.png') });
@@ -713,8 +715,7 @@
         await watch.waitFor({ state: 'detached' });
         await page.goBack();
         await watch.getByRole('heading', { name: 'Fixture Series', exact: true }).waitFor();
-        await watch.getByText('Browse libraries', { exact: true }).click();
-        await watch.getByRole('link', { name: 'Shows', exact: true }).last().click();
+        await page.evaluate(parent => { location.hash = '#/tv?topParentId=' + parent + '&collectionType=tvshows'; }, tvId);
         await page.locator('#tvshowsPage').waitFor();
         await watch.waitFor({ state: 'detached' });
         await page.evaluate(() => { location.hash = '#/home'; });

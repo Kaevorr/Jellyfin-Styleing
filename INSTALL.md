@@ -24,7 +24,7 @@ The URL ends in `.js` without a trailing slash. Leave **JavaScript Code** empty,
 
 ## Optional JellyNext Discovery
 
-For genre shelves and the IMDb catalog, use Kaevorr JellyNext 1.10.1.0 with its Discovery script enabled. Under Jellyfin's server data directory, place the compressed dataset at `plugins/Jellyfin.Plugin.JellyNext/title.basics.tsv.gz` and give Jellyfin read access. Refresh Jellyfin Web and open **Movies & Shows → Discovery**. If Discovery reports a missing catalog, check that path and the file permissions. After replacing an already loaded snapshot, restart Jellyfin so it builds the new index. [IMDb dataset setup and terms](https://github.com/Kaevorr/jellynext#movie-catalog-setup-and-coverage)
+For genre shelves and the IMDb catalog, use Kaevorr JellyNext 1.10.1.0 with its Discovery script enabled. Under Jellyfin's server data directory, place the compressed dataset at `plugins/Jellyfin.Plugin.JellyNext/title.basics.tsv.gz` and give Jellyfin read access. Refresh Jellyfin Web, open **Movies & Shows**, and scroll to **Movie Discovery**. If Discovery reports a missing catalog, check that path and the file permissions. After replacing an already loaded snapshot, restart Jellyfin so it builds the new index. [IMDb dataset setup and terms](https://github.com/Kaevorr/jellynext#movie-catalog-setup-and-coverage)
 
 See [genre ordering and CSS examples](README.md#customize-genre-order-and-css) for optional JellyNext appearance changes.
 
